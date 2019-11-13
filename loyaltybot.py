@@ -12,6 +12,7 @@ db.create_tables()
 
 # Discord bot token and other misc information
 token = open("token.txt", "r").read()
+defaultperms = "join,hello"
 prefix = "!"
 status = "who's loyal, and who's not!"
 client = discord.Client()
@@ -34,13 +35,12 @@ async def on_ready():
 # When a member joins a guild
 async def on_member_join(member):
     # Add them to the users database
-    db.add_user(member.id, member.name, member.joined_at, member.guild)
+    db.add_user(member.id, member.name, member.joined_at, member.guild, defaultperms)
     # Loop over all connected guilds
     for guild in client.guilds:
         # If the guild is the member's guild, send a welcome message to the system channel
         if guild == member.guild:
             await guild.system_channel.send(f"Welcome {member.name} to {guild.name}!")
-            print(f"Sent a message to guild: {guild.name}")
 
 
 @client.event
@@ -51,27 +51,53 @@ async def on_message(message):
     userid = message.author.id
     if message.content == prefix + "hello":
         await message.channel.send(f"Hello {name}!")
-        print(f"Sent a message to guild: {message.guild.name}")
     elif message.content == prefix + "joined":
         joined = datetime.fromisoformat(str(message.author.joined_at))
         date = joined.strftime("%B %d, %Y")
         await message.channel.send(f"{name} joined on {date}")
     elif message.content == prefix + "join":
-        db.add_user(userid, name, str(message.author.joined_at), message.guild.id)
-        await message.channel.send(f"Added user with the following info: {userid, name, str(message.author.joined_at), message.guild.id}")
+        db.add_user(userid, name, str(message.author.joined_at), message.guild.id, defaultperms)
+        await message.channel.send(f"Added user with the following info: {userid, name, str(message.author.joined_at), message.guild.id, defaultperms}")
     elif message.content == prefix + "userinfo":
-        await message.channel.send(f"DB Info:\n{db.get_username(userid)}\n{db.get_guild_id(userid)}\n{db.get_joined(userid)}\n{db.get_userid(db.get_username(userid))}")
+            await message.channel.send(f"DB Info:\n{db.get_username(userid)}\n{db.get_guild_id(userid)}\n{db.get_joined(userid)}\n{db.get_userid(db.get_username(userid))}")
     elif message.content == prefix + "roles":
         for role in message.guild.roles:
             roleid = role.id
             name = role.name
             permissions = role.permissions
             await message.channel.send(f"{name, roleid, permissions}")
+    elif message.content.split()[0] == prefix + "permissions":
+        arg1 = message.content.split()[1]
+        if arg1 == "add":
+            permission = message.content.split()[3]
+            if valid_permission(permission):
+                for member in message.mentions:
+                    addperm = db.add_user_permission(member.id, permission)
+                    if addperm:
+                        await message.channel.send(f"Added permission: {permission} to {name}")
+                    else:
+                        await message.channel.send("User has permission or user is not in database!")
+            else:
+                await message.channel.send("Provided permission is not valid")
+        elif arg1 == "remove":
+            pass
+        else:
+            for member in message.mentions:
+                print(db.get_user_permissions(member.id))
+                await message.channel.send("Printed the user's permissions to the console")
 
 
 def user_has_role(userid, rolename):
     for userrole in client.get_guild(db.get_guild_id(userid)).get_member(userid).roles:
         if userrole.name == rolename:
+            return True
+    return False
+
+
+def valid_permission(permission):
+    valid_perms = ["permissions", "join", "joined", "hello", "userinfo"]
+    for perm in valid_perms:
+        if permission == perm:
             return True
     return False
 

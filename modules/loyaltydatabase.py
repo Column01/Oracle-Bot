@@ -12,65 +12,77 @@ c = conn.cursor()
 
 def create_tables():
     # Create all the user info
-    c.execute("CREATE TABLE IF NOT EXISTS users(userid INT, username TEXT, joined TEXT, guildid int, permissions BLOB)")
+    c.execute("CREATE TABLE IF NOT EXISTS users(userid INT, username TEXT, joined TEXT, guildid int, permissions TEXT)")
     conn.commit()
 
 
-def add_user(userid, name, joined, guildid):
-    c.execute("INSERT INTO users (userid, username, joined, guildid) VALUES (?, ?, ?, ?)",
-              (userid, name, joined, guildid))
+def add_user(userid, name, joined, guildid, permissions):
+    c.execute("INSERT INTO users (userid, username, joined, guildid, permissions) VALUES (?, ?, ?, ?, ?)",
+              (userid, name, joined, guildid, permissions))
     conn.commit()
+
+
+def add_user_permission(userid, permission):
+    userperms = get_user_permissions(userid)
+    if user_has_permission(userid, permission) or userperms is None:
+        return False
+    else:
+        userperms.append(permission)
+        userperms = ",".join(userperms)
+        c.execute("UPDATE users SET permissions = ? WHERE userid = ?", (userperms, userid))
+        conn.commit()
+        return True
+
+
+def user_has_permission(userid, permission):
+    userperms = get_user_permissions(userid)
+    for userperm in userperms:
+        if userperm == permission:
+            return True
+    return False
 
 
 def get_all_userids():
     c.execute("SELECT userid FROM users")
-    conn.commit()
-    if c.fetchone() is not None:
-        return c.fetchone()[0]
-    else:
-        print(f"Database has no users in it")
+    return c.fetchall()
 
 
 def get_username(userid):
     c.execute("SELECT username,userid FROM users WHERE userid = ?", (userid, ))
-    conn.commit()
-    if c.fetchone() is not None:
-        return c.fetchone()[0]
-    else:
-        print(f"UserID: {userid} is not in the database")
+    fetch = c.fetchone()
+    if fetch is not None:
+        return fetch[0]
+    return None
 
 
 def get_joined(userid):
     c.execute("SELECT joined,userid FROM users WHERE userid = ?", (userid, ))
-    conn.commit()
-    if c.fetchone() is not None:
-        return c.fetchone()[0]
-    else:
-        print(f"UserID: {userid} is not in the database")
+    fetch = c.fetchone()
+    if fetch is not None:
+        return fetch[0]
+    return None
 
 
 def get_userid(username):
     c.execute("SELECT userid,username FROM users WHERE username = ?", (username, ))
-    conn.commit()
-    if c.fetchone() is not None:
-        return c.fetchone()[0]
-    else:
-        print(f"Username: {username} is not in the database")
+    fetch = c.fetchone()
+    if fetch is not None:
+        return fetch[0]
+    return None
 
 
 def get_guild_id(userid):
     c.execute("SELECT guildid,userid FROM users WHERE userid = ?", (userid, ))
-    conn.commit()
-    if c.fetchone() is not None:
-        return c.fetchone()[0]
-    else:
-        print(f"UserID: {userid} is not in the database")
+    fetch = c.fetchone()
+    if fetch is not None:
+        return fetch[0]
+    return None
 
 
 def get_user_permissions(userid):
     c.execute("SELECT permissions,userid FROM users WHERE userid = ?", (userid, ))
-    conn.commit()
-    if c.fetchone() is not None:
-        return c.fetchone()[0]
-    else:
-        print(f"UserID: {userid} is not in the database")
+    fetch = c.fetchone()
+    if fetch is not None:
+        return fetch[0].split(",")
+    return None
+
