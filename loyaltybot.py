@@ -7,11 +7,12 @@ import discord
 import asyncio
 from datetime import datetime
 
-# Discord bot token and other misc information
+# Discord bot token from disk and init other misc info
 token = open("token.txt", "r").read()
 defaultperms = "join,hello"
 prefix = "!"
 status = "who's loyal, and who's not!"
+
 client = discord.Client()
 
 
@@ -66,20 +67,25 @@ async def check_users():
         for guild in client.guilds:
             # Loop over every member in that guild
             for member in guild.members:
+                # ignore bots
+                if member.bot:
+                    continue
                 # get their joined time and convert it to datetime format
                 joined = datetime.fromisoformat(str(member.joined_at))
                 # get the current datetime format
                 current = datetime.now()
                 # subtract them to get the days they've been a member
                 days = abs(current-joined).days
-                if days < 1:
+                if days >= 1:
                     # check for a default role
                     default_role = discord.utils.get(guild.roles, name="Default")
                     # if it doesn't exist, make the role
                     if default_role is None:
-                        discord_role = await guild.create_role(name="Default", reason="Blank Bot Role")
-                    # if they don't have the defualt role, give it to them
+                        default_role = await guild.create_role(name="Default", reason="Blank Bot Role")
+                        print(f"Creating default role for {guild.name}")
+                    # if they don't have the default role, give it to them
                     if not user_has_role(guild, member.id, default_role.id):
+                        print(f"{member.name} in {guild.name} does not have default role. Adding to user")
                         await member.add_roles(default_role, reason="Playtime Requirements")
         # Run every three seconds
         await asyncio.sleep(3)
