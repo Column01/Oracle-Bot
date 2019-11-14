@@ -5,7 +5,8 @@
 
 import discord
 import asyncio
-from datetime import datetime
+import pytz
+from datetime import datetime, timezone
 
 # Discord bot token from disk and init other misc info
 token = open("token.txt", "r").read()
@@ -58,6 +59,13 @@ def user_has_role(guild, userid, roleid):
     return False
 
 
+def is_current_time(t):
+    # Get time and compare it to the given time.
+    ti = datetime.now(pytz.timezone("US/Eastern"))
+    ft = datetime.strftime(ti, "%m/%d/%y %H:%M EST")
+    return t == ft
+
+
 # Loop over all users and get their time as members
 async def check_users():
     await client.wait_until_ready()
@@ -90,6 +98,31 @@ async def check_users():
         # Run every three seconds
         await asyncio.sleep(3)
 
+
+async def set_server_time():
+    await client.wait_until_ready()
+    await asyncio.sleep(1)
+    while True:
+        # Get current EST time and format it
+        t = datetime.now(pytz.timezone("US/Eastern"))
+        formatted_time = datetime.strftime(t, "%m/%d/%y %H:%M EST")
+        # for all guilds that the bot is connected to
+        for guild in client.guilds:
+            # set some overwrites to prevent joining
+            overwrites = {}
+            for role in guild.roles:
+                overwrites[role] = discord.PermissionOverwrite(connect=False)
+            server_time_category = discord.utils.get(guild.categories, name="Server Time")
+            if server_time_category is None:
+                server_time_category = await guild.create_category(name="Server Time")
+            if len(server_time_category.voice_channels) == 0:
+                await server_time_category.create_voice_channel(name=formatted_time, overwrites=overwrites)
+            else:
+                for vc in server_time_category.voice_channels:
+                    await vc.edit(name=formatted_time, overwrites=overwrites)
+        await asyncio.sleep(1)
+
 # Register my loop task and run the bot
 client.loop.create_task(check_users())
+client.loop.create_task(set_server_time())
 client.run(token)
