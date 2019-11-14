@@ -6,83 +6,64 @@
 import sqlite3
 
 # Create and Connect to the users database
-conn = sqlite3.connect("loyalusers.db")
+conn = sqlite3.connect("DMS.db")
 c = conn.cursor()
 
 
 def create_tables():
     # Create all the user info
-    c.execute("CREATE TABLE IF NOT EXISTS users(userid INT, username TEXT, joined TEXT, guildid int, permissions TEXT)")
+    c.execute("CREATE TABLE IF NOT EXISTS dms(userid INT, allowedroles TEXT)")
     conn.commit()
 
 
-def add_user(userid, name, joined, guildid, permissions):
-    c.execute("INSERT INTO users (userid, username, joined, guildid, permissions) VALUES (?, ?, ?, ?, ?)",
-              (userid, name, joined, guildid, permissions))
-    conn.commit()
-
-
-def add_user_permission(userid, permission):
-    userperms = get_user_permissions(userid)
-    if user_has_permission(userid, permission) or userperms is None:
-        return False
-    else:
-        userperms.append(permission)
-        userperms = ",".join(userperms)
-        c.execute("UPDATE users SET permissions = ? WHERE userid = ?", (userperms, userid))
+def add_dm(userid):
+    if not existing_dm(userid):
+        c.execute("INSERT INTO dms (userid, allowedroles) VALUES (?, ?)", (userid, ""))
         conn.commit()
         return True
+    else:
+        return False
 
 
-def user_has_permission(userid, permission):
-    userperms = get_user_permissions(userid)
-    for userperm in userperms:
-        if userperm == permission:
-            return True
-    return False
+def add_allowed_roles(userid, roles):
+    allowed_roles = get_allowed_roles(userid)
+    added_roles = []
+    if allowed_roles is not None:
+        for role in roles:
+            if has_allowed_role(userid, role):
+                pass
+            else:
+                allowed_roles.append(role)
+                added_roles.append(role)
+        roles_str = ",".join(allowed_roles)
+        if roles_str[0] == ",":
+            roles_str = roles_str[1:]
+        c.execute("UPDATE dms SET allowedroles = ? WHERE userid = ?", (roles_str, userid))
+        conn.commit()
+        return added_roles
+    else:
+        return False
 
 
-def get_all_userids():
-    c.execute("SELECT userid FROM users")
-    return c.fetchall()
-
-
-def get_username(userid):
-    c.execute("SELECT username,userid FROM users WHERE userid = ?", (userid, ))
-    fetch = c.fetchone()
-    if fetch is not None:
-        return fetch[0]
-    return None
-
-
-def get_joined(userid):
-    c.execute("SELECT joined,userid FROM users WHERE userid = ?", (userid, ))
-    fetch = c.fetchone()
-    if fetch is not None:
-        return fetch[0]
-    return None
-
-
-def get_userid(username):
-    c.execute("SELECT userid,username FROM users WHERE username = ?", (username, ))
-    fetch = c.fetchone()
-    if fetch is not None:
-        return fetch[0]
-    return None
-
-
-def get_guild_id(userid):
-    c.execute("SELECT guildid,userid FROM users WHERE userid = ?", (userid, ))
-    fetch = c.fetchone()
-    if fetch is not None:
-        return fetch[0]
-    return None
-
-
-def get_user_permissions(userid):
-    c.execute("SELECT permissions,userid FROM users WHERE userid = ?", (userid, ))
+def get_allowed_roles(userid):
+    c.execute("SELECT allowedroles,userid FROM dms WHERE userid = ?", (userid,))
     fetch = c.fetchone()
     if fetch is not None:
         return fetch[0].split(",")
     return None
 
+
+def has_allowed_role(userid, role):
+    allowed_roles = get_allowed_roles(userid)
+    for role1 in allowed_roles:
+        if role1 == role:
+            return True
+    return False
+
+
+def existing_dm(userid):
+    c.execute("SELECT userid FROM dms WHERE userid = ?", (userid,))
+    fetch = c.fetchone()
+    if fetch is not None:
+        return True
+    return False

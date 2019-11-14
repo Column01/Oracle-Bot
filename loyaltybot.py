@@ -6,11 +6,12 @@
 import discord
 import asyncio
 import pytz
-from datetime import datetime, timezone
+from datetime import datetime
+import modules.loyaltydatabase as db
+db.create_tables()
 
 # Discord bot token from disk and init other misc info
 token = open("token.txt", "r").read()
-defaultperms = "join,hello"
 prefix = "!"
 status = "who's loyal, and who's not!"
 
@@ -45,10 +46,46 @@ async def on_member_join(member):
 # When a member sends a message
 async def on_message(message):
     # and the message is "{prefix}hello", send a welcome message
-    name = message.author.name
-    userid = message.author.id
-    if message.content == prefix + "role":
-        pass
+    command = message.content.split()
+    if command[0] == prefix + "dm":
+        if command[1] == "create":
+            for dm in message.mentions:
+                try_add_dm = db.add_dm(dm.id)
+                added_roles = []
+                for role in message.role_mentions:
+                    await dm.add_roles(role)
+                    added_roles.append(role.name)
+                added_roles = ", ".join(added_roles)
+                if try_add_dm:
+                    await message.channel.send(f"Added the DM: `{dm.name}` to the database "
+                                               f"and assigned them the role(s): `{added_roles}`")
+                else:
+                    allowed_roles = db.get_allowed_roles(dm.id)
+                    role_names = []
+                    for roleid in allowed_roles:
+                        role_names.append(message.guild.get_role(int(roleid)).name)
+                    if allowed_roles is not None:
+                        role_names = ", ".join(role_names)
+                        await message.channel.send(f"`{dm.name}` is already a DM "
+                                                   f"and is allowed to give the following roles:\n `{role_names}`")
+        if command[1] == "allow":
+            for dm in message.mentions:
+                role_ids = []
+                role_names = []
+                for role in message.role_mentions:
+                    role_ids.append(str(role.id))
+                    role_names.append(role.name)
+                try_add_roles = db.add_allowed_roles(dm.id, role_ids)
+                role_names = ", ".join(role_names)
+                if try_add_roles is False:
+                    await message.channel.send(f"Failed to add roles to the DM: `{dm.name}`. "
+                                               f"\nDid you make them a DM using '!dm create'?")
+                else:
+                    if len(try_add_roles) != 0:
+                        try_add_roles = ", ".join(try_add_roles)
+                        await message.channel.send(f"Added the roles: `{try_add_roles}` to the DM: `{dm.name}`")
+                    else:
+                        await message.channel.send(f"`{dm.name}` already has roles: `{role_names}`")
 
 
 def user_has_role(guild, userid, roleid):
