@@ -1,4 +1,4 @@
-# Name: loyaltybot.py
+# Name: dmbot.py
 # Description: A bot that manages roles for users based on their time in the server
 # Author: Colin Andress
 # Date Created: 11/12/2019
@@ -7,7 +7,7 @@ import discord
 import asyncio
 import pytz
 from datetime import datetime
-import modules.loyaltydatabase as db
+import modules.dmdatabase as db
 db.create_tables()
 
 # Discord bot token from disk and init other misc info

@@ -1,4 +1,4 @@
-# Name: loyaltydatabase.py
+# Name: dmdatabase.py
 # Description: Manages LoyaltyBot's database
 # Author: Colin Andress
 # Date Created: 11/12/2019
