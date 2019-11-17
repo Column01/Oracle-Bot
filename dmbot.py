@@ -163,19 +163,23 @@ async def set_server_time():
         formatted_time = datetime.strftime(t, "%m/%d/%y %H:%M EST")
         # for all guilds that the bot is connected to
         for guild in client.guilds:
-            # set some overwrites to prevent joining
+            # set some overwrites to prevent joining of the Voice channel (all roles are blacklisted)
             overwrites = {}
             for role in guild.roles:
                 overwrites[role] = discord.PermissionOverwrite(connect=False)
+            # Try and find an existing server time category
             server_time_category = discord.utils.get(guild.categories, name="Server Time")
+            # create the server time category if it fails to find it.
             if server_time_category is None:
                 server_time_category = await guild.create_category(name="Server Time")
+            # if there is no existing serber time channel in the category, create it.
             if len(server_time_category.voice_channels) == 0:
                 await server_time_category.create_voice_channel(name=formatted_time, overwrites=overwrites)
             else:
+            	# for every VC in the server time category, edit the name to the new time.
                 for vc in server_time_category.voice_channels:
                     await vc.edit(name=formatted_time, overwrites=overwrites)
-        # runs every second to update server time clock
+        # Runs every second
         await asyncio.sleep(1)
 
 
