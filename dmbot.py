@@ -7,9 +7,10 @@ import discord
 import asyncio
 import pytz
 from datetime import datetime
+import json
 import modules.dmdatabase as db
-# Create the database and the tables in it.
-db.create_tables()
+import modules.json_management as jm
+
 
 # Get discord bot token from disk and init other misc info
 token = open("token.txt", "r").read()
@@ -22,12 +23,16 @@ client = discord.Client()
 @client.event
 # When the bot connects to discord
 async def on_ready():
-    botname = client.user.name
-    print(f"{botname} connected to discord!")
+    # Create the database and the tables in it.
+    db.create_tables()
+    # Create server times file
+    jm.create_server_times_file()
+    bot_name = client.user.name
+    print(f"{bot_name} connected to discord!")
     # Setting discord presence
     await client.change_presence(activity=discord.Activity(name=status, type=discord.ActivityType.watching))
     print(f"Setting discord presence to: Watching {status}")
-    print(f"{botname} is apart of the following guilds:")
+    print(f"{bot_name} is apart of the following guilds:")
     for guild in client.guilds:
         num = client.guilds.index(guild) + 1
         print(f"\t{num}. {guild.name} (id: {guild.id})")
@@ -46,61 +51,84 @@ async def on_member_join(member):
 @client.event
 # When a member sends a message
 async def on_message(message):
-    # split the message contents so we have a command array with arguments
-    command = message.content.split()
-    # if the first item is the "dm" command
-    if command[0] == prefix + "dm":
-    	# and if the second item is "create"
-        if command[1] == "create":
-        	# loop over the message mentions and add each mention to the database
-            for dm in message.mentions:
-                try_add_dm = db.add_dm(dm.id)
-                added_roles = []
-                # loop over the roles that were mentioned in the message and add them to each DM
-                for role in message.role_mentions:
-                    await dm.add_roles(role)
-                    added_roles.append(role.name)
-                added_roles = ", ".join(added_roles)
-                # if adding the DM worked, reply with a message
-                if try_add_dm:
-                    await message.channel.send(f"Added the DM: `{dm.name}` to the database "
-                                               f"and assigned them the role(s): `{added_roles}`")
-                # if adding the dm failed, message the channel with a list of the roles the DM is allowed to add
-                else:
-                    allowed_roles = db.get_allowed_roles(dm.id)
-                    role_names = []
-                    for roleid in allowed_roles:
-                        role_names.append(message.guild.get_role(int(roleid)).name)
-                    if allowed_roles is not None:
-                        role_names = ", ".join(role_names)
-                        await message.channel.send(f"`{dm.name}` is already a DM "
-                                                   f"and is allowed to give the following roles:\n `{role_names}`")
-        # if the second item is "allow"
-        if command[1] == "allow":
-        	# loop over message mentions
-            for dm in message.mentions:
-                role_ids = []
-                role_names = []
-                # loop over each role that was mentioned and add it to two different arrays (one with the IDS and one with the names)
-                for role in message.role_mentions:
-                    role_ids.append(str(role.id))
-                    role_names.append(role.name)
-                # try to add the allowed roles to the DM that was mentioned in the message
-                try_add_roles = db.add_allowed_roles(dm.id, role_ids)
-                role_names = ", ".join(role_names)
-                # if adding failed, message the channel asking if they made the DM
-                if try_add_roles is False:
-                    await message.channel.send(f"Failed to add roles to the DM: `{dm.name}`. "
-                                               f"\nDid you make them a DM using '!dm create'?")
-                # if it returned anything else
-                else:
-                	# and the length of the returned data is not zero, the roles were added.
-                    if len(try_add_roles) != 0:
-                        try_add_roles = ", ".join(try_add_roles)
-                        await message.channel.send(f"Added the roles: `{try_add_roles}` to the DM: `{dm.name}`")
-                    # if there is nothing in try_add_roles, that means it the DM is already allowed to add these roles.
+    # If the message author is an administrator
+    if message.author.server_permissions.administrator:
+        # split the message contents so we have a command array with arguments
+        command = message.content.split()
+        # if the first item is the "dm" command
+        if command[0] == f"{prefix}dm":
+            # and if the second item is "create"
+            if command[1] == "create":
+                # loop over the message mentions and add each mention to the database
+                for dm in message.mentions:
+                    try_add_dm = db.add_dm(dm.id)
+                    added_roles = []
+                    # loop over the roles that were mentioned in the message and add them to each DM
+                    for role in message.role_mentions:
+                        await dm.add_roles(role)
+                        added_roles.append(role.name)
+                    added_roles = ", ".join(added_roles)
+                    # if adding the DM worked, reply with a message
+                    if try_add_dm:
+                        await message.channel.send(f"Added the DM: `{dm.name}` to the database "
+                                                   f"and assigned them the role(s): `{added_roles}`")
+                    # if adding the dm failed, message the channel with a list of the roles the DM is allowed to add
                     else:
-                        await message.channel.send(f"`{dm.name}` already has roles: `{role_names}`")
+                        allowed_roles = db.get_allowed_roles(dm.id)
+                        role_names = []
+                        for roleid in allowed_roles:
+                            role_names.append(message.guild.get_role(int(roleid)).name)
+                        if allowed_roles is not None:
+                            role_names = ", ".join(role_names)
+                            await message.channel.send(f"`{dm.name}` is already a DM "
+                                                       f"and is allowed to give the following roles:\n `{role_names}`")
+            # if the second item is "allow"
+            if command[1] == "allow":
+                # loop over message mentions
+                for dm in message.mentions:
+                    role_ids = []
+                    role_names = []
+                    # loop over each role that was mentioned and add it to two different arrays
+                    # (one with the IDS and one with the names)
+                    for role in message.role_mentions:
+                        role_ids.append(str(role.id))
+                        role_names.append(role.name)
+                    # try to add the allowed roles to the DM that was mentioned in the message
+                    try_add_roles = db.add_allowed_roles(dm.id, role_ids)
+                    role_names = ", ".join(role_names)
+                    # if adding failed, message the channel asking if they made the DM
+                    if try_add_roles is False:
+                        await message.channel.send(f"Failed to add roles to the DM: `{dm.name}`. "
+                                                   f"\nDid you make them a DM using '!dm create'?")
+                    # if it returned anything else
+                    else:
+                        # and the length of the returned data is not zero, the roles were added.
+                        if len(try_add_roles) != 0:
+                            try_add_roles = ", ".join(try_add_roles)
+                            await message.channel.send(f"Added the roles: `{try_add_roles}` to the DM: `{dm.name}`")
+                        # if there is nothing in try_add_roles, that means it the DM is allowed to add these roles.
+                        else:
+                            await message.channel.send(f"`{dm.name}` already has roles: `{role_names}`")
+        # Server time Command
+        elif command[0] == f"{prefix}settings":
+            if command[1] == "servertime":
+                if command[2] == "setchannel":
+                    try:
+                        channel_id = command[2]
+                        guild = str(message.guild.id)
+                        # Get the current server times file from disk
+                        server_times = jm.get_server_times()
+                        # if the guild is not in the server times file, add it
+                        if server_times["guilds"][guild] is None:
+                            server_times["guilds"][guild] = {}
+                        # set the channel id in the file
+                        server_times["guilds"][guild]["channel_id"] = channel_id
+                        # write changes to disk
+                        jm.write_server_times(server_times)
+                        await message.channel.send(f"Set server time channel to channel ID: {channel_id}")
+                    except IndexError:
+                        await message.channel.send(f"You must provide a channel ID for the server time channel."
+                                                   f"\nCreate a voice channel, right click it and click `Copy ID`")
 
 
 # Returns True if the user has the role, and returns false if they don't have the role
@@ -161,24 +189,21 @@ async def set_server_time():
         # Get current EST time and format it
         t = datetime.now(pytz.timezone("US/Eastern"))
         formatted_time = datetime.strftime(t, "%m/%d/%y %H:%M EST")
-        # for all guilds that the bot is connected to
+        # For all guilds that the bot is connected to
         for guild in client.guilds:
-            # set some overwrites to prevent joining of the Voice channel (all roles are blacklisted)
+            # Set some overwrites to prevent joining of the Voice channel (all roles are blacklisted)
             overwrites = {}
             for role in guild.roles:
                 overwrites[role] = discord.PermissionOverwrite(connect=False)
-            # Try and find an existing server time category
-            server_time_category = discord.utils.get(guild.categories, name="Server Time")
-            # create the server time category if it fails to find it.
-            if server_time_category is None:
-                server_time_category = await guild.create_category(name="Server Time")
-            # if there is no existing serber time channel in the category, create it.
-            if len(server_time_category.voice_channels) == 0:
-                await server_time_category.create_voice_channel(name=formatted_time, overwrites=overwrites)
+            # Try and get the server time channel for the guild (set by the user)
+            server_time_id = jm.get_guild_time_channel(guild.id)
+            server_time_channel = discord.utils.get(guild.voice_channels, id=server_time_id)
+            # if the server time channel doesn't exist, or the channel name is already the current time, then continue
+            if server_time_channel is None or is_current_time(server_time_channel.name):
+                continue
             else:
-            	# for every VC in the server time category, edit the name to the new time.
-                for vc in server_time_category.voice_channels:
-                    await vc.edit(name=formatted_time, overwrites=overwrites)
+                # edit the name to the new time and set the overwrites again
+                await server_time_channel.edit(name=formatted_time, overwrites=overwrites)
         # Runs every second
         await asyncio.sleep(1)
 
