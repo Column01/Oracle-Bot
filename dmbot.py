@@ -122,7 +122,7 @@ async def on_message(message):
                         if server_times["guilds"][guild] is None:
                             server_times["guilds"][guild] = {}
                         # set the channel id in the file
-                        server_times["guilds"][guild]["channel_id"] = channel_id
+                        server_times["guilds"][guild]["server_time_channel"] = channel_id
                         # write changes to disk
                         jm.write_server_times(server_times)
                         await message.channel.send(f"Set server time channel to channel ID: {channel_id}")

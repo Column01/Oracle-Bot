@@ -25,4 +25,4 @@ def write_server_times(st):
 
 def get_guild_time_channel(guild_id):
     st = get_server_times()
-    return int(st['guilds'][str(guild_id)]['channel_id'])
+    return int(st['guilds'][str(guild_id)]['server_time_channel'])
