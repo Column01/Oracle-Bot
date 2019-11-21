@@ -50,10 +50,10 @@ async def on_member_join(member):
 @client.event
 # When a member sends a message
 async def on_message(message):
+    command = message.content.split()
     # If the message author is an administrator
     if message.author.guild_permissions.administrator:
         # split the message contents so we have a command array with arguments
-        command = message.content.split()
         # if the first item is the "dm" command
         if command[0] == f"{prefix}dm":
             # and if the second item is "create"
@@ -141,7 +141,12 @@ async def on_message(message):
                     if len(command) == 5:
                         # get the role and the days required
                         role = discord.utils.get(guild.roles, name=command[3])
+                        if role is None:
+                            await message.channel.send(f"Cannot find role with name: {command[3]}. "
+                                                       f"Did you type it correctly?\n{usage}")
                         days_req = command[4]
+                        if days_req < 1:
+                            await message.channel.send(f"You must provide a day requirement of 1 day or more.\n{usage}")
                         # make the loyalty roles section if it doesn't exist already
                         if server_settings["guilds"][guild_id].get("loyalty_Roles") is None:
                             server_settings["guilds"][guild_id]["loyalty_roles"] = {}
@@ -158,13 +163,42 @@ async def on_message(message):
                 # remove loyalty role
                 elif command[2] == "remove":
                     usage = "Usage: `!settings loylatyroles remove <Role Name>`"
-                    if len(command) == 3:
+                    if len(command) == 4:
+                        # Fetch the role from discord
                         role = discord.utils.get(guild.roles, name=command[3])
-                    elif len(command) < 3:
+                        if role is None:
+                            await message.channel.send(f"Cannot find role with name: {command[3]}. "
+                                                       f"Did you type it correctly?\n{usage}")
+                        # Remove the role from the loyalty roles
+                        server_settings["guilds"][guild_id]["loyalty_roles"].pop(str(role.id))
+                        # write changes
+                        jm.write_server_settings(server_settings)
+                        await message.channel.send(f"Removed role: `{command[3]}` from server settings.")
+                    elif len(command) < 4:
                         await message.channel.send(f"You must provide the role you want removed from the server config"
                                                    f"\n{usage}")
                     else:
                         await message.channel.send(f"Too many arguments!\n{usage}`")
+            # list server settings
+            elif command[1] == "list":
+                roles_info = []
+                index = 0
+                for role_id in server_settings["guilds"][guild_id]["loyalty_roles"]:
+                    index += 1
+                    role = discord.utils.get(guild.roles, id=int(role_id))
+                    days = server_settings["guilds"][guild_id]["loyalty_roles"][role_id]
+                    if days == 1:
+                        roles_info.append(f"{index}. '{role.name}' with requirement of {days} day\n")
+                    else:
+                        roles_info.append(f"{index}. '{role.name}' with requirement of {days} days\n")
+                roles_info = "".join(roles_info)
+                server_time_id = jm.get_guild_time_channel(str(guild.id))
+                await message.channel.send(f"__**Current server settings:**__\n\n"
+                                           f"**Server time channel ID:** `{server_time_id}`\n\n"
+                                           f"**Loyalty Roles:**\n"
+                                           f"```\n"
+                                           f"{roles_info}"
+                                           f"```")
     else:
         await message.channel.send("You must be an admin to use commands for Loyalty Bot!")
 
