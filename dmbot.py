@@ -145,7 +145,7 @@ async def on_message(message):
                             await message.channel.send(f"Cannot find role with name: {command[3]}. "
                                                        f"Did you type it correctly?\n{usage}")
                         days_req = command[4]
-                        if days_req < 1:
+                        if days_req < '1':
                             await message.channel.send(f"You must provide a day requirement of 1 day or more.\n{usage}")
                         # make the loyalty roles section if it doesn't exist already
                         if server_settings["guilds"][guild_id].get("loyalty_Roles") is None:
@@ -183,14 +183,17 @@ async def on_message(message):
             elif command[1] == "list":
                 roles_info = []
                 index = 0
-                for role_id in server_settings["guilds"][guild_id]["loyalty_roles"]:
-                    index += 1
-                    role = discord.utils.get(guild.roles, id=int(role_id))
-                    days = server_settings["guilds"][guild_id]["loyalty_roles"][role_id]
-                    if days == 1:
-                        roles_info.append(f"{index}. '{role.name}' with requirement of {days} day\n")
-                    else:
-                        roles_info.append(f"{index}. '{role.name}' with requirement of {days} days\n")
+                if len(server_settings["guilds"][guild_id]["loyalty_roles"]) == 0:
+                    roles_info.append("None")
+                else:
+                    for role_id in server_settings["guilds"][guild_id]["loyalty_roles"]:
+                        index += 1
+                        role = discord.utils.get(guild.roles, id=int(role_id))
+                        days = server_settings["guilds"][guild_id]["loyalty_roles"][role_id]
+                        if days == '1':
+                            roles_info.append(f"{index}. '{role.name}' with requirement of {days} day\n")
+                        else:
+                            roles_info.append(f"{index}. '{role.name}' with requirement of {days} days\n")
                 roles_info = "".join(roles_info)
                 server_time_id = jm.get_guild_time_channel(str(guild.id))
                 await message.channel.send(f"__**Current server settings:**__\n\n"
