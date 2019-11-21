@@ -7,7 +7,6 @@ import discord
 import asyncio
 import pytz
 from datetime import datetime
-import json
 import modules.dmdatabase as db
 import modules.json_management as jm
 
@@ -26,7 +25,7 @@ async def on_ready():
     # Create the database and the tables in it.
     db.create_tables()
     # Create server times file
-    jm.create_server_times_file()
+    jm.create_server_settings_file()
     bot_name = client.user.name
     print(f"{bot_name} connected to discord!")
     # Setting discord presence
@@ -52,7 +51,7 @@ async def on_member_join(member):
 # When a member sends a message
 async def on_message(message):
     # If the message author is an administrator
-    if message.author.server_permissions.administrator:
+    if message.author.guild_permissions.administrator:
         # split the message contents so we have a command array with arguments
         command = message.content.split()
         # if the first item is the "dm" command
@@ -111,24 +110,63 @@ async def on_message(message):
                             await message.channel.send(f"`{dm.name}` already has roles: `{role_names}`")
         # Server time Command
         elif command[0] == f"{prefix}settings":
+            # Get the current server settings file from disk
+            server_settings = jm.get_server_settings()
+            guild = message.guild
+            guild_id = str(message.guild.id)
+            # if the guild is not in the server settings file, add it
+            if server_settings["guilds"].get(guild_id) is None:
+                server_settings["guilds"][guild_id] = {}
+            # if it is the server time command
             if command[1] == "servertime":
+                usage = "`!settings servertime setchannel <channel ID>`"
                 if command[2] == "setchannel":
-                    try:
-                        channel_id = command[2]
-                        guild = str(message.guild.id)
-                        # Get the current server times file from disk
-                        server_times = jm.get_server_times()
-                        # if the guild is not in the server times file, add it
-                        if server_times["guilds"][guild] is None:
-                            server_times["guilds"][guild] = {}
+                    if len(command) == 4:
+                        channel_id = command[3]
                         # set the channel id in the file
-                        server_times["guilds"][guild]["server_time_channel"] = channel_id
+                        server_settings["guilds"][guild_id]["server_time_channel"] = channel_id
                         # write changes to disk
-                        jm.write_server_times(server_times)
+                        jm.write_server_settings(server_settings)
                         await message.channel.send(f"Set server time channel to channel ID: {channel_id}")
-                    except IndexError:
-                        await message.channel.send(f"You must provide a channel ID for the server time channel."
-                                                   f"\nCreate a voice channel, right click it and click `Copy ID`")
+                    elif len(command) < 4:
+                        await message.channel.send("You must provide a channel ID for the server time channel."
+                                                   "\nCreate a voice channel, right click it and click `Copy ID`")
+                    else:
+                        await message.channel.send(f"Too many arguments!\n{usage}")
+            # Loyalty role commands
+            elif command[1] == "loyaltyroles":
+                # add loyalty role
+                if command[2] == "add":
+                    usage = "Usage: `!settings loylatyroles add <Role Name> <number of days>`"
+                    if len(command) == 5:
+                        # get the role and the days required
+                        role = discord.utils.get(guild.roles, name=command[3])
+                        days_req = command[4]
+                        # make the loyalty roles section if it doesn't exist already
+                        if server_settings["guilds"][guild_id].get("loyalty_Roles") is None:
+                            server_settings["guilds"][guild_id]["loyalty_roles"] = {}
+                        # add the role to the settings and write the settings to disk
+                        server_settings["guilds"][guild_id]["loyalty_roles"][role.id] = days_req
+                        jm.write_server_settings(server_settings)
+                        await message.channel.send(f"Added role: `{role.name}` to list of loyalty roles "
+                                                   f"with a time requirement of `{days_req} days`.")
+                    elif len(command) < 5:
+                        await message.channel.send(f"You must provide the number of days required to get this role."
+                                                   f"\n{usage}")
+                    else:
+                        await message.channel.send(f"Too many arguments!\n{usage}")
+                # remove loyalty role
+                elif command[2] == "remove":
+                    usage = "Usage: `!settings loylatyroles remove <Role Name>`"
+                    if len(command) == 3:
+                        role = discord.utils.get(guild.roles, name=command[3])
+                    elif len(command) < 3:
+                        await message.channel.send(f"You must provide the role you want removed from the server config"
+                                                   f"\n{usage}")
+                    else:
+                        await message.channel.send(f"Too many arguments!\n{usage}`")
+    else:
+        await message.channel.send("You must be an admin to use commands for Loyalty Bot!")
 
 
 # Returns True if the user has the role, and returns false if they don't have the role
