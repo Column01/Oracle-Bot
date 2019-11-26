@@ -6,7 +6,6 @@ def create_server_settings_file():
         open("guild_settings.json", "r")
     except FileNotFoundError:
         st = {'guilds': {}}
-        print(st)
         write_server_settings(st)
 
 

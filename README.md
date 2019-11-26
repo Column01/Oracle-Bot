@@ -15,4 +15,4 @@ A discord bot to manage Dungeon masters on your discord server
 	- `!settings loyaltyroles add <role name> <days required>`
 
 - Remove a loyalty role:
-	- `!settings loyaltyroles remove <role name> <days required>`
+	- `!settings loyaltyroles remove <role name>`
