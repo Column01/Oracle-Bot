@@ -137,7 +137,7 @@ async def on_message(message):
             elif command[1] == "loyaltyroles":
                 # add loyalty role
                 if command[2] == "add":
-                    usage = "Usage: `!settings loylatyroles add <Role Name> <number of days>`"
+                    usage = "Usage: `!settings loyaltyroles add <Role Name> <number of days>`"
                     if len(command) == 5:
                         # get the role and the days required
                         role = discord.utils.get(guild.roles, name=command[3])
@@ -162,7 +162,7 @@ async def on_message(message):
                         await message.channel.send(f"Too many arguments!\n{usage}")
                 # remove loyalty role
                 elif command[2] == "remove":
-                    usage = "Usage: `!settings loylatyroles remove <Role Name>`"
+                    usage = "Usage: `!settings loyaltyroles remove <Role Name>`"
                     if len(command) == 4:
                         # Fetch the role from discord
                         role = discord.utils.get(guild.roles, name=command[3])
