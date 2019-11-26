@@ -23,9 +23,9 @@ client = discord.Client()
 # When the bot connects to discord
 async def on_ready():
     # Create the database and the tables in it.
-    db.create_tables()
+    await db.create_tables()
     # Create server times file
-    jm.create_server_settings_file()
+    await jm.create_server_settings_file()
     bot_name = client.user.name
     print(f"{bot_name} connected to discord!")
     # Setting discord presence
@@ -35,6 +35,7 @@ async def on_ready():
     for guild in client.guilds:
         num = client.guilds.index(guild) + 1
         print(f"\t{num}. {guild.name} (id: {guild.id})")
+        await asyncio.sleep(0.1)
 
 
 @client.event
@@ -45,6 +46,7 @@ async def on_member_join(member):
         # If the guild is the member's guild, send a welcome message to the system channel
         if guild == member.guild:
             await guild.system_channel.send(f"Welcome {member.name} to {guild.name}!")
+        await asyncio.sleep(0.1)
 
 
 @client.event
@@ -60,7 +62,7 @@ async def on_message(message):
             if command[1] == "create":
                 # loop over the message mentions and add each mention to the database
                 for dm in message.mentions:
-                    try_add_dm = db.add_dm(dm.id)
+                    try_add_dm = await db.add_dm(dm.id)
                     added_roles = []
                     # loop over the roles that were mentioned in the message and add them to each DM
                     for role in message.role_mentions:
@@ -73,7 +75,7 @@ async def on_message(message):
                                                    f"and assigned them the role(s): `{added_roles}`")
                     # if adding the dm failed, message the channel with a list of the roles the DM is allowed to add
                     else:
-                        allowed_roles = db.get_allowed_roles(dm.id)
+                        allowed_roles = await db.get_allowed_roles(dm.id)
                         role_names = []
                         for roleid in allowed_roles:
                             role_names.append(message.guild.get_role(int(roleid)).name)
@@ -93,7 +95,7 @@ async def on_message(message):
                         role_ids.append(str(role.id))
                         role_names.append(role.name)
                     # try to add the allowed roles to the DM that was mentioned in the message
-                    try_add_roles = db.add_allowed_roles(dm.id, role_ids)
+                    try_add_roles = await db.add_allowed_roles(dm.id, role_ids)
                     role_names = ", ".join(role_names)
                     # if adding failed, message the channel asking if they made the DM
                     if try_add_roles is False:
@@ -111,7 +113,7 @@ async def on_message(message):
         # Server time Command
         elif command[0] == f"{prefix}settings":
             # Get the current server settings file from disk
-            server_settings = jm.get_server_settings()
+            server_settings = await jm.get_server_settings()
             guild = message.guild
             guild_id = str(message.guild.id)
             # if the guild is not in the server settings file, add it
@@ -126,7 +128,7 @@ async def on_message(message):
                         # set the channel id in the file
                         server_settings["guilds"][guild_id]["server_time_channel"] = channel_id
                         # write changes to disk
-                        jm.write_server_settings(server_settings)
+                        await jm.write_server_settings(server_settings)
                         await message.channel.send(f"Set server time channel to channel ID: {channel_id}")
                     elif len(command) < 4:
                         await message.channel.send("You must provide a channel ID for the server time channel."
@@ -152,7 +154,7 @@ async def on_message(message):
                             server_settings["guilds"][guild_id]["loyalty_roles"] = {}
                         # add the role to the settings and write the settings to disk
                         server_settings["guilds"][guild_id]["loyalty_roles"][role.id] = days_req
-                        jm.write_server_settings(server_settings)
+                        await jm.write_server_settings(server_settings)
                         await message.channel.send(f"Added role: `{role.name}` to list of loyalty roles "
                                                    f"with a time requirement of `{days_req} days`.")
                     elif len(command) < 5:
@@ -172,7 +174,7 @@ async def on_message(message):
                         # Remove the role from the loyalty roles
                         server_settings["guilds"][guild_id]["loyalty_roles"].pop(str(role.id))
                         # write changes
-                        jm.write_server_settings(server_settings)
+                        await jm.write_server_settings(server_settings)
                         await message.channel.send(f"Removed role: `{command[3]}` from server settings.")
                     elif len(command) < 4:
                         await message.channel.send(f"You must provide the role you want removed from the server config"
@@ -195,7 +197,7 @@ async def on_message(message):
                         else:
                             roles_info.append(f"{index}. '{role.name}' with requirement of {days} days\n")
                 roles_info = "".join(roles_info)
-                server_time_id = jm.get_guild_time_channel(str(guild.id))
+                server_time_id = await jm.get_guild_time_channel(str(guild.id))
                 await message.channel.send(f"__**Current server settings:**__\n\n"
                                            f"**Server time channel ID:** `{server_time_id}`\n\n"
                                            f"**Loyalty Roles:**\n"
@@ -207,16 +209,18 @@ async def on_message(message):
 
 
 # Returns True if the user has the role, and returns false if they don't have the role
-def user_has_role(guild, userid, roleid):
+async def user_has_role(guild, userid, roleid):
     user_roles = guild.get_member(userid).roles
     for role in user_roles:
         if role.id == roleid:
             return True
+        await asyncio.sleep(0.1)
     return False
 
 
 # checks the current time against the time passed to it and if they are the same, will return True
-def is_current_time(t):
+async def is_current_time(t):
+    await asyncio.sleep(0.1)
     # Get time and compare it to the given time.
     ti = datetime.now(pytz.timezone("US/Eastern"))
     ft = datetime.strftime(ti, "%m/%d/%y %H:%M EST")
@@ -249,7 +253,7 @@ async def check_users():
                         default_role = await guild.create_role(name="Default", reason="Blank Bot Role")
                         print(f"Creating default role for {guild.name}")
                     # if they don't have the default role, give it to them
-                    if not user_has_role(guild, member.id, default_role.id):
+                    if not await user_has_role(guild, member.id, default_role.id):
                         print(f"{member.name} in {guild.name} does not have default role. Adding to user")
                         await member.add_roles(default_role, reason="Playtime Requirements")
         # Run every three seconds
@@ -271,10 +275,10 @@ async def set_server_time():
             for role in guild.roles:
                 overwrites[role] = discord.PermissionOverwrite(connect=False)
             # Try and get the server time channel for the guild (set by the user)
-            server_time_id = jm.get_guild_time_channel(guild.id)
+            server_time_id = await jm.get_guild_time_channel(guild.id)
             server_time_channel = discord.utils.get(guild.voice_channels, id=server_time_id)
             # if the server time channel doesn't exist, or the channel name is already the current time, then continue
-            if server_time_channel is None or is_current_time(server_time_channel.name):
+            if server_time_channel is None or await is_current_time(server_time_channel.name):
                 continue
             else:
                 # edit the name to the new time and set the overwrites again
