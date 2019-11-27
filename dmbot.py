@@ -9,11 +9,12 @@ import pytz
 from datetime import datetime
 import modules.dmdatabase as db
 import modules.json_management as jm
+import commands.settings_command as scmd
+import commands.help_command as help
 
 
 # Get discord bot token from disk and init other misc info
 token = open("token.txt", "r").read()
-prefix = "!"
 status = "who's loyal, and who's not!"
 
 client = discord.Client()
@@ -52,6 +53,7 @@ async def on_member_join(member):
 @client.event
 # When a member sends a message
 async def on_message(message):
+    prefix = await jm.get_prefix(str(message.guild.id))
     command = message.content.split()
     # If the message author is an administrator
     if message.author.guild_permissions.administrator:
@@ -112,98 +114,13 @@ async def on_message(message):
                             await message.channel.send(f"`{dm.name}` already has roles: `{role_names}`")
         # Server time Command
         elif command[0] == f"{prefix}settings":
-            # Get the current server settings file from disk
-            server_settings = await jm.get_server_settings()
-            guild = message.guild
-            guild_id = str(message.guild.id)
-            # if the guild is not in the server settings file, add it
-            if server_settings["guilds"].get(guild_id) is None:
-                server_settings["guilds"][guild_id] = {}
-            # if it is the server time command
-            if command[1] == "servertime":
-                usage = "`!settings servertime setchannel <channel ID>`"
-                if command[2] == "setchannel":
-                    if len(command) == 4:
-                        channel_id = command[3]
-                        # set the channel id in the file
-                        server_settings["guilds"][guild_id]["server_time_channel"] = channel_id
-                        # write changes to disk
-                        await jm.write_server_settings(server_settings)
-                        await message.channel.send(f"Set server time channel to channel ID: {channel_id}")
-                    elif len(command) < 4:
-                        await message.channel.send("You must provide a channel ID for the server time channel."
-                                                   "\nCreate a voice channel, right click it and click `Copy ID`")
-                    else:
-                        await message.channel.send(f"Too many arguments!\n{usage}")
-            # Loyalty role commands
-            elif command[1] == "loyaltyroles":
-                # add loyalty role
-                if command[2] == "add":
-                    usage = "Usage: `!settings loyaltyroles add <Role Name> <number of days>`"
-                    if len(command) == 5:
-                        # get the role and the days required
-                        role = discord.utils.get(guild.roles, name=command[3])
-                        if role is None:
-                            await message.channel.send(f"Cannot find role with name: {command[3]}. "
-                                                       f"Did you type it correctly?\n{usage}")
-                        days_req = command[4]
-                        if days_req < '1':
-                            await message.channel.send(f"You must provide a day requirement of 1 day or more.\n{usage}")
-                        # make the loyalty roles section if it doesn't exist already
-                        if server_settings["guilds"][guild_id].get("loyalty_Roles") is None:
-                            server_settings["guilds"][guild_id]["loyalty_roles"] = {}
-                        # add the role to the settings and write the settings to disk
-                        server_settings["guilds"][guild_id]["loyalty_roles"][role.id] = days_req
-                        await jm.write_server_settings(server_settings)
-                        await message.channel.send(f"Added role: `{role.name}` to list of loyalty roles "
-                                                   f"with a time requirement of `{days_req} days`.")
-                    elif len(command) < 5:
-                        await message.channel.send(f"You must provide the number of days required to get this role."
-                                                   f"\n{usage}")
-                    else:
-                        await message.channel.send(f"Too many arguments!\n{usage}")
-                # remove loyalty role
-                elif command[2] == "remove":
-                    usage = "Usage: `!settings loyaltyroles remove <Role Name>`"
-                    if len(command) == 4:
-                        # Fetch the role from discord
-                        role = discord.utils.get(guild.roles, name=command[3])
-                        if role is None:
-                            await message.channel.send(f"Cannot find role with name: {command[3]}. "
-                                                       f"Did you type it correctly?\n{usage}")
-                        # Remove the role from the loyalty roles
-                        server_settings["guilds"][guild_id]["loyalty_roles"].pop(str(role.id))
-                        # write changes
-                        await jm.write_server_settings(server_settings)
-                        await message.channel.send(f"Removed role: `{command[3]}` from server settings.")
-                    elif len(command) < 4:
-                        await message.channel.send(f"You must provide the role you want removed from the server config"
-                                                   f"\n{usage}")
-                    else:
-                        await message.channel.send(f"Too many arguments!\n{usage}`")
-            # list server settings
-            elif command[1] == "list":
-                roles_info = []
-                index = 0
-                if len(server_settings["guilds"][guild_id]["loyalty_roles"]) == 0:
-                    roles_info.append("None")
-                else:
-                    for role_id in server_settings["guilds"][guild_id]["loyalty_roles"]:
-                        index += 1
-                        role = discord.utils.get(guild.roles, id=int(role_id))
-                        days = server_settings["guilds"][guild_id]["loyalty_roles"][role_id]
-                        if days == '1':
-                            roles_info.append(f"{index}. '{role.name}' with requirement of {days} day\n")
-                        else:
-                            roles_info.append(f"{index}. '{role.name}' with requirement of {days} days\n")
-                roles_info = "".join(roles_info)
-                server_time_id = await jm.get_guild_time_channel(str(guild.id))
-                await message.channel.send(f"__**Current server settings:**__\n\n"
-                                           f"**Server time channel ID:** `{server_time_id}`\n\n"
-                                           f"**Loyalty Roles:**\n"
-                                           f"```\n"
-                                           f"{roles_info}"
-                                           f"```")
+            await scmd.handle_settings_command(message)
+        elif command[0] == f"{prefix}loyaltybot":
+            if command[1] == "help":
+                await help.handle_help_command(message)
+        else:
+            if message.startswith(prefix):
+                await message.channel.send(f"Unknown command: {command}. Did you type it correctly?")
     else:
         await message.channel.send("You must be an admin to use commands for Loyalty Bot!")
 
