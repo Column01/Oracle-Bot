@@ -2,31 +2,38 @@ import json
 import asyncio
 
 
+guild_storage = "guild_storage.json"
+
+
+# Create the server settings file if it doesn't exist
 async def create_server_settings_file():
     try:
-        open("guild_settings.json", "r")
+        open(guild_storage, "r")
     except FileNotFoundError:
         st = {'guilds': {}}
         await write_server_settings(st)
     await asyncio.sleep(0.1)
 
 
+# Load the server settings file
 async def get_server_settings():
     await asyncio.sleep(0.1)
-    with open("guild_settings.json", "r") as r:
+    with open(guild_storage, "r") as r:
         st = json.load(r)
         r.close()
         return st
 
 
+# Write the changes to the server storage file.
 async def write_server_settings(st):
     await asyncio.sleep(0.1)
-    with open("guild_settings.json", "w+") as w:
+    with open(guild_storage, "w+") as w:
         json.dump(st, w, indent=4)
         w.close()
     await asyncio.sleep(0.1)
 
 
+# Returns the channel ID for the guild time channel. Returns None if there is not one set
 async def get_guild_time_channel(guild_id):
     await asyncio.sleep(0.1)
     st = await get_server_settings()
@@ -35,6 +42,7 @@ async def get_guild_time_channel(guild_id):
     return None
 
 
+# Get the prefix for the guild in the config. If there is no prefix set, return an exclamation point
 async def get_prefix(guild_id):
     await asyncio.sleep(0.1)
     st = await get_server_settings()

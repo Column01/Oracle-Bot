@@ -1,10 +1,11 @@
 import asyncio
 import discord
+from operator import itemgetter
 import modules.json_management as jm
 
 
 async def handle_settings_command(message):
-    command = message.content.split()
+    settings_command = message.content.split()
     # Get the current server settings file from disk
     server_settings = await jm.get_server_settings()
     guild = message.guild
@@ -13,31 +14,32 @@ async def handle_settings_command(message):
     if server_settings["guilds"].get(guild_id) is None:
         server_settings["guilds"][guild_id] = {}
     # if it is the server time command
-    if command[1] == "servertime":
-        if command[2] == "set":
-            await server_time_set(message, server_settings, guild_id, command)
-        elif command[2] == "remove":
-            await server_time_remove(message, server_settings, guild_id, command)
+    if settings_command[1] == "servertime":
+        if settings_command[2] == "set":
+            await server_time_set(message, server_settings, guild_id, settings_command)
+        elif settings_command[2] == "remove":
+            await server_time_remove(message, server_settings, guild_id, guild, settings_command)
     # Loyalty role commands
-    elif command[1] == "loyaltyroles":
+    elif settings_command[1] == "loyaltyroles":
         # add loyalty role
-        if command[2] == "add":
-            await loyalty_roles_add(message, server_settings, guild_id, command, guild)
+        if settings_command[2] == "add":
+            await loyalty_roles_add(message, server_settings, guild_id, settings_command, guild)
         # remove loyalty role
-        elif command[2] == "remove":
-            await loyalty_roles_remove(message, server_settings, guild_id, command, guild)
+        elif settings_command[2] == "remove":
+            await loyalty_roles_remove(message, server_settings, guild_id, settings_command, guild)
     # list server settings
-    elif command[1] == "list":
+    elif settings_command[1] == "list":
         await list_settings(message, server_settings, guild)
-    elif command[1] == "prefix":
-        new_prefix = command[2]
-        await set_prefix(message, server_settings, guild_id, command, new_prefix)
+    elif settings_command[1] == "prefix":
+        new_prefix = settings_command[2]
+        await set_prefix(message, server_settings, guild_id, settings_command, new_prefix)
 
 
 async def list_settings(message, settings, guild):
     guild_id = str(guild.id)
     roles_info = []
     index = 0
+    await sort_loyalty_roles(settings, guild_id)
     if len(settings["guilds"][guild_id]["loyalty_roles"]) == 0:
         roles_info.append("None")
     else:
@@ -80,6 +82,7 @@ async def loyalty_roles_add(message, settings, guild_id, command, guild):
         if settings["guilds"][guild_id]["loyalty_roles"].get(str(role.id)) is None:
             settings["guilds"][guild_id]["loyalty_roles"][role.id] = days_req
             await jm.write_server_settings(settings)
+            await sort_loyalty_roles(settings, guild_id)
             await message.channel.send(f"Added role: `{role.name}` to list of loyalty roles "
                                        f"with a time requirement of `{days_req} days`.")
         else:
@@ -92,6 +95,16 @@ async def loyalty_roles_add(message, settings, guild_id, command, guild):
     else:
         await asyncio.sleep(0.1)
         await message.channel.send(f"Too many arguments!\nUsage: {usage}")
+
+
+async def sort_loyalty_roles(settings, guild_id):
+    # Sorts the loyalty roles in order from highest day's required to lowest
+    sorted_dict = {}
+    loyal_roles = settings["guilds"][guild_id]["loyalty_roles"]
+    for key, value in sorted(loyal_roles.items(), key=lambda item: int(item[1]), reverse=True):
+        sorted_dict[key] = value
+    settings["guilds"][guild_id]["loyalty_roles"] = sorted_dict
+    await jm.write_server_settings(settings)
 
 
 async def loyalty_roles_remove(message, settings, guild_id, command, guild):
@@ -107,6 +120,7 @@ async def loyalty_roles_remove(message, settings, guild_id, command, guild):
         settings["guilds"][guild_id]["loyalty_roles"].pop(str(role.id))
         # write changes
         await jm.write_server_settings(settings)
+        await sort_loyalty_roles(settings, guild_id)
         await message.channel.send(f"Removed role: `{command[3]}` from server settings.")
     elif len(command) < 4:
         await asyncio.sleep(0.1)
@@ -134,11 +148,14 @@ async def server_time_set(message, settings, guild_id, command):
         await message.channel.send(f"Too many arguments!\nUsage: {usage}")
 
 
-async def server_time_remove(message, settings, guild_id, command):
+async def server_time_remove(message, settings, guild_id, guild, command):
     prefix = await jm.get_prefix(guild_id)
     usage = f"`{prefix}settings servertime remove`"
     channel_id = settings["guilds"][guild_id]["server_time_channel"]
     if len(command) == 3:
+        channel = discord.utils.get(guild.voice_channels, id=channel_id)
+        if channel is not None:
+            await channel.delete(reason="Removing server time channel")
         settings["guilds"][guild_id]["server_time_channel"].pop(channel_id)
         await jm.write_server_settings(settings)
         await message.channel.send("Removed server time channel from server settings.")

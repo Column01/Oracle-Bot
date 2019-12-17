@@ -54,73 +54,81 @@ async def on_member_join(member):
 # When a member sends a message
 async def on_message(message):
     prefix = await jm.get_prefix(str(message.guild.id))
-    command = message.content.split()
+    # If the message is from the bot or contains and embed, ignore it.
+    if message.author == client.user or len(message.embeds) > 0:
+        return
     # If the message author is an administrator
     if message.author.guild_permissions.administrator:
         # split the message contents so we have a command array with arguments
+        command = message.content.split()
+        # COMMENTED UNTIL CONVERTED TO JSON
         # if the first item is the "dm" command
-        if command[0] == f"{prefix}dm":
-            # and if the second item is "create"
-            if command[1] == "create":
-                # loop over the message mentions and add each mention to the database
-                for dm in message.mentions:
-                    try_add_dm = await db.add_dm(dm.id)
-                    added_roles = []
-                    # loop over the roles that were mentioned in the message and add them to each DM
-                    for role in message.role_mentions:
-                        await dm.add_roles(role)
-                        added_roles.append(role.name)
-                    added_roles = ", ".join(added_roles)
-                    # if adding the DM worked, reply with a message
-                    if try_add_dm:
-                        await message.channel.send(f"Added the DM: `{dm.name}` to the database "
-                                                   f"and assigned them the role(s): `{added_roles}`")
-                    # if adding the dm failed, message the channel with a list of the roles the DM is allowed to add
-                    else:
-                        allowed_roles = await db.get_allowed_roles(dm.id)
-                        role_names = []
-                        for roleid in allowed_roles:
-                            role_names.append(message.guild.get_role(int(roleid)).name)
-                        if allowed_roles is not None:
-                            role_names = ", ".join(role_names)
-                            await message.channel.send(f"`{dm.name}` is already a DM "
-                                                       f"and is allowed to give the following roles:\n `{role_names}`")
-            # if the second item is "allow"
-            if command[1] == "allow":
-                # loop over message mentions
-                for dm in message.mentions:
-                    role_ids = []
-                    role_names = []
-                    # loop over each role that was mentioned and add it to two different arrays
-                    # (one with the IDS and one with the names)
-                    for role in message.role_mentions:
-                        role_ids.append(str(role.id))
-                        role_names.append(role.name)
-                    # try to add the allowed roles to the DM that was mentioned in the message
-                    try_add_roles = await db.add_allowed_roles(dm.id, role_ids)
-                    role_names = ", ".join(role_names)
-                    # if adding failed, message the channel asking if they made the DM
-                    if try_add_roles is False:
-                        await message.channel.send(f"Failed to add roles to the DM: `{dm.name}`. "
-                                                   f"\nDid you make them a DM using '!dm create'?")
-                    # if it returned anything else
-                    else:
-                        # and the length of the returned data is not zero, the roles were added.
-                        if len(try_add_roles) != 0:
-                            try_add_roles = ", ".join(try_add_roles)
-                            await message.channel.send(f"Added the roles: `{try_add_roles}` to the DM: `{dm.name}`")
-                        # if there is nothing in try_add_roles, that means it the DM is allowed to add these roles.
-                        else:
-                            await message.channel.send(f"`{dm.name}` already has roles: `{role_names}`")
+        # if command[0] == f"{prefix}dm":
+        #     # and if the second item is "create"
+        #     if len(command) > 1 and command[1] == "create":
+        #         # loop over the message mentions and add each mention to the database
+        #         for dm in message.mentions:
+        #             try_add_dm = await db.add_dm(dm.id)
+        #             added_roles = []
+        #             # loop over the roles that were mentioned in the message and add them to each DM
+        #             for role in message.role_mentions:
+        #                 await dm.add_roles(role)
+        #                 added_roles.append(role.name)
+        #             added_roles = ", ".join(added_roles)
+        #             # if adding the DM worked, reply with a message
+        #             if try_add_dm:
+        #                 await message.channel.send(f"Added the DM: `{dm.name}` to the database "
+        #                                            f"and assigned them the role(s): `{added_roles}`")
+        #             # if adding the dm failed, message the channel with a list of the roles the DM is allowed to add
+        #             else:
+        #                 allowed_roles = await db.get_allowed_roles(dm.id)
+        #                 role_names = []
+        #                 for roleid in allowed_roles:
+        #                     role_names.append(message.guild.get_role(int(roleid)).name)
+        #                 if allowed_roles is not None:
+        #                     role_names = ", ".join(role_names)
+        #                     await message.channel.send(f"`{dm.name}` is already a DM "
+        #                                                f"and is allowed to give the following roles:\n `{role_names}`")
+        #
+        #     # if the second item is "allow"
+        #     elif len(command) > 1 and command[1] == "allow":
+        #         # loop over message mentions
+        #         for dm in message.mentions:
+        #             role_ids = []
+        #             role_names = []
+        #             # loop over each role that was mentioned and add it to two different arrays
+        #             # (one with the IDS and one with the names)
+        #             for role in message.role_mentions:
+        #                 role_ids.append(str(role.id))
+        #                 role_names.append(role.name)
+        #             # try to add the allowed roles to the DM that was mentioned in the message
+        #             try_add_roles = await db.add_allowed_roles(dm.id, role_ids)
+        #             role_names = ", ".join(role_names)
+        #             # if adding failed, message the channel asking if they made the DM
+        #             if try_add_roles is False:
+        #                 await message.channel.send(f"Failed to add roles to the DM: `{dm.name}`. "
+        #                                            f"\nDid you make them a DM using '!dm create'?")
+        #             # if it returned anything else
+        #             else:
+        #                 # and the length of the returned data is not zero, the roles were added.
+        #                 if len(try_add_roles) != 0:
+        #                     try_add_roles = ", ".join(try_add_roles)
+        #                     await message.channel.send(f"Added the roles: `{try_add_roles}` to the DM: `{dm.name}`")
+        #                 # if there is nothing in try_add_roles, that means it the DM is allowed to add these roles.
+        #                 else:
+        #                     await message.channel.send(f"`{dm.name}` already has roles: `{role_names}`")
+        #     else:
+        #         await message.channel.send(f"Not enough arguments. Usage: {usage}")
         # Server time Command
-        elif command[0] == f"{prefix}settings":
+        if command[0] == f"{prefix}settings":
             await scmd.handle_settings_command(message)
         elif command[0] == f"{prefix}loyaltybot":
             if command[1] == "help":
                 await help.handle_help_command(message)
         else:
-            if message.startswith(prefix):
-                await message.channel.send(f"Unknown command: {command}. Did you type it correctly?")
+            unknown_command = " ".join(command)
+            if unknown_command[:1] == prefix:
+                await message.channel.send(f"Unknown command: `{unknown_command}`. Did you type it correctly?")
     else:
         await message.channel.send("You must be an admin to use commands for Loyalty Bot!")
 
@@ -151,6 +159,7 @@ async def check_users():
     while True:
         # Loop over every guild the bot is a part of
         for guild in client.guilds:
+            guild_id = str(guild.id)
             # Loop over every member in that guild
             for member in guild.members:
                 # ignore bots
@@ -162,17 +171,30 @@ async def check_users():
                 current = datetime.now()
                 # subtract them to get the days they've been a member
                 days = abs(current-joined).days
-                if days >= 1:
-                    # check for a default role
-                    default_role = discord.utils.get(guild.roles, name="Default")
-                    # if it doesn't exist, make the role
-                    if default_role is None:
-                        default_role = await guild.create_role(name="Default", reason="Blank Bot Role")
-                        print(f"Creating default role for {guild.name}")
-                    # if they don't have the default role, give it to them
-                    if not await user_has_role(guild, member.id, default_role.id):
-                        print(f"{member.name} in {guild.name} does not have default role. Adding to user")
-                        await member.add_roles(default_role, reason="Playtime Requirements")
+                # Get the server settings file and then get the loyalty roles for the server
+                settings = await jm.get_server_settings()
+                loyalty_roles = settings["guilds"][guild_id]["loyalty_roles"]
+                # Loop over all loyalty roles
+                for role_id in loyalty_roles:
+                    role_days = int(loyalty_roles[role_id])
+                    # If the user has been a member long enough for the role
+                    if days >= role_days:
+                        # Get the index of the next loyalty role in the storage (the old role) and then get the role ID
+                        next_index = list(loyalty_roles.keys()).index(role_id) + 1
+                        old_role_id = list(loyalty_roles.keys())[next_index]
+                        # get the new role and the old role from discord
+                        role = discord.utils.get(guild.roles, id=int(role_id))
+                        old_role = discord.utils.get(guild.roles, id=int(old_role_id))
+                        # if the new role exists on discord
+                        if role is not None:
+                            # and they don't already have it
+                            if not await user_has_role(guild, member.id, int(role_id)):
+                                # Add the new role and remove the old one
+                                if old_role is not None:
+                                    await member.remove_roles(old_role)
+                                await member.add_roles(role, reason="Playtime Requirements")
+                        # break so we don't keep adding roles
+                        break
         # Run every three seconds
         await asyncio.sleep(3)
 
