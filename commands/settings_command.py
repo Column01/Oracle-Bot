@@ -140,7 +140,7 @@ async def server_time_set(message, settings, guild_id, command):
         settings["guilds"][guild_id]["server_time_channel"] = channel_id
         # write changes to disk
         await jm.write_server_settings(settings)
-        await message.channel.send(f"Set server time channel to channel ID: {channel_id}")
+        await message.channel.send(f"Set server time channel to channel ID: `{channel_id}`")
     elif len(command) < 4:
         await message.channel.send("You must provide a channel ID for the server time channel."
                                    "\nCreate a voice channel, right click it and click `Copy ID`")
@@ -153,12 +153,14 @@ async def server_time_remove(message, settings, guild_id, guild, command):
     usage = f"`{prefix}settings servertime remove`"
     channel_id = settings["guilds"][guild_id]["server_time_channel"]
     if len(command) == 3:
-        channel = discord.utils.get(guild.voice_channels, id=channel_id)
+        # Try to get the channel from the id and delete it
+        channel = discord.utils.get(guild.voice_channels, id=int(channel_id))
         if channel is not None:
             await channel.delete(reason="Removing server time channel")
-        settings["guilds"][guild_id]["server_time_channel"].pop(channel_id)
+        # Remove it from storage and write the changes
+        settings["guilds"][guild_id].pop("server_time_channel")
         await jm.write_server_settings(settings)
-        await message.channel.send("Removed server time channel from server settings.")
+        await message.channel.send("Removed server time channel from server settings and deleted the channel")
     elif len(command) > 3:
         await message.channel.send(f"Too many arguments!\nUsage: {usage}")
 
