@@ -5,6 +5,7 @@ A discord bot to manage Dungeon masters on your discord server
 
 ## Commands
 
+**NOTE:** Replace `!` with the prefix you set in your server settings. If you forget your prefix, DM me on discord and I can reset it manually: `Column#2194`
 
 ### Server Settings
 
