@@ -5,6 +5,9 @@ A discord bot to manage Dungeon masters on your discord server
 
 ## Commands
 
+
+### Server Settings
+
 - List server settings:
 	- `!settings list`
 
@@ -22,3 +25,14 @@ A discord bot to manage Dungeon masters on your discord server
 
 - Remove a loyalty role:
 	- `!settings loyaltyroles remove <role name>`
+
+### DM Management
+
+- Create a DM:
+	- `!dm create @user`
+
+- Delete a DM:
+	- `!dm delete @user`
+
+- Allow roles for a DM to add to others:
+	- `!dm allow @user @role1 @role2...`

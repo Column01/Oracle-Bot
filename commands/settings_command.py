@@ -1,6 +1,5 @@
 import asyncio
 import discord
-from operator import itemgetter
 import modules.json_management as jm
 
 
