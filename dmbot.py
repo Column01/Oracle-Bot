@@ -76,6 +76,19 @@ async def on_message(message):
         await message.channel.send("You must be an admin to use commands for Loyalty Bot!")
 
 
+@client.event
+# Handles when the bot is removed from a guild
+async def on_guild_remove(guild):
+    guild_id = str(guild.id)
+    # Remove the guild from storage to make sure we don't store data we no longer need.
+    settings = await jm.get_server_settings()
+    settings["guilds"].pop(guild_id)
+    await jm.write_server_settings(settings)
+    print(f"The guild: {guild.name} removed the bot from the guild. We are sad to see them go, "
+          f"but we know we are better off without them!")
+    await asyncio.sleep(0.1)
+
+
 # Register my loop tasks and run the bot
 client.loop.create_task(lu.check_loyal_users(client))
 client.loop.create_task(st.set_server_time(client))
