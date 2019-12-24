@@ -1,3 +1,8 @@
+# Copyright © 2019, Colin Andress. All Rights reserved
+# Name: settings_command.py
+# Description: Handles the "!settings" command
+# Author: Colin Andress
+
 import asyncio
 import discord
 import modules.json_management as jm

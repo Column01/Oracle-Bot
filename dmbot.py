@@ -1,7 +1,7 @@
+# Copyright © 2019, Colin Andress. All Rights reserved
 # Name: dmbot.py
-# Description: A bot that manages DM's and their players for discord servers (designed for one server ATM)
+# Description: A bot that manages DM's and their players for discord servers
 # Author: Colin Andress
-# Date Created: 11/12/2019
 
 import discord
 import asyncio
@@ -23,8 +23,7 @@ client = discord.Client()
 @client.event
 # When the bot connects to discord
 async def on_ready():
-    # Create the database and the tables in it.
-    # Create server times file
+    # Create guild storage file
     await jm.create_server_settings_file()
     bot_name = client.user.name
     print(f"{bot_name} connected to discord!")
@@ -60,9 +59,9 @@ async def on_message(message):
     if message.author.guild_permissions.administrator:
         # split the message contents so we have a command array with arguments
         command = message.content.split()
+        # handle the commands
         if command[0] == f"{prefix}dm":
             await dmcmd.handle_dm_command(message)
-        # Server time Command
         elif command[0] == f"{prefix}settings":
             await scmd.handle_settings_command(message)
         elif command[0] == f"{prefix}loyaltybot":

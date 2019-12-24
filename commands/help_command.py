@@ -1,3 +1,8 @@
+# Copyright © 2019, Colin Andress. All Rights reserved
+# Name: help_command.py
+# Description: Handles the "!loyaltybot help" command
+# Author: Colin Andress
+
 import discord
 import modules.json_management as jm
 

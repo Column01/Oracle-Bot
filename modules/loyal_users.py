@@ -1,3 +1,8 @@
+# Copyright © 2019, Colin Andress. All Rights reserved
+# Name: loyal_users.py
+# Description: Script to check loyal user's playtimes and give them loyalty roles
+# Author: Colin Andress
+
 from datetime import datetime
 import discord
 import asyncio

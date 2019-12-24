@@ -1,3 +1,8 @@
+# Copyright © 2019, Colin Andress. All Rights reserved
+# Name: dm_command.py
+# Description: Handles the "!dm" command
+# Author: Colin Andress
+
 import asyncio
 import modules.json_management as jm
 

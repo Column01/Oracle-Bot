@@ -1,3 +1,8 @@
+# Copyright © 2019, Colin Andress. All Rights reserved
+# Name: json_management.py
+# Description: Manages the JSON storage for the servers
+# Author: Colin Andress
+
 import json
 import asyncio
 

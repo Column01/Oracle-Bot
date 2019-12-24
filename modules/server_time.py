@@ -1,3 +1,8 @@
+# Copyright © 2019, Colin Andress. All Rights reserved
+# Name: server_time.py
+# Description: Updates the server time channel for each guild
+# Author: Colin Andress
+
 import asyncio
 import discord
 from datetime import datetime
