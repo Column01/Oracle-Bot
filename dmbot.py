@@ -14,7 +14,7 @@ import commands.dm_command as dmcmd
 
 
 # Get discord bot token from disk and init other misc info
-token = open("token.txt", "r").read()
+token = open("token.txt", "r").read().strip("\n")
 status = "who's loyal, and who's not!"
 
 client = discord.Client()
