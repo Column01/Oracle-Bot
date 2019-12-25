@@ -17,6 +17,7 @@ async def check_loyal_users(client):
         # Loop over every guild the bot is a part of
         for guild in client.guilds:
             guild_id = str(guild.id)
+            settings = await jm.get_server_settings()
             if settings["guilds"].get(guild_id) is not None:
                 # Loop over every member in that guild
                 for member in guild.members:
@@ -30,14 +31,14 @@ async def check_loyal_users(client):
                     # subtract them to get the days they've been a member
                     days = abs(current-joined).days
                     # Get the server settings file and then get the loyalty roles for the server
-                    settings = await jm.get_server_settings()
                     loyalty_roles = settings["guilds"][guild_id]["loyalty_roles"]
                     # Loop over all loyalty roles
                     for role_id in loyalty_roles:
                         role_days = int(loyalty_roles[role_id])
                         # If the user has been a member long enough for the role
                         if days >= role_days:
-                            # Get the index of the next loyalty role in the storage (the old role) and then get the role ID
+                            # Get the index of the next loyalty role in the storage
+                            # (the old role) and then get the role ID
                             next_index = list(loyalty_roles.keys()).index(role_id) + 1
                             old_role_id = list(loyalty_roles.keys())[next_index]
                             # get the new role and the old role from discord
