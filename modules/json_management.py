@@ -42,7 +42,7 @@ async def write_server_settings(st):
 async def get_guild_time_channel(guild_id):
     await asyncio.sleep(0.1)
     st = await get_server_settings()
-    if st['guilds'].get(str(guild_id)) is not None:
+    if await is_in_guilds_file(guild_id):
         if st['guilds'][str(guild_id)].get("server_time_channel") is not None:
             return int(st['guilds'][str(guild_id)]['server_time_channel'])
     return None
@@ -52,7 +52,15 @@ async def get_guild_time_channel(guild_id):
 async def get_prefix(guild_id):
     await asyncio.sleep(0.1)
     st = await get_server_settings()
-    if st['guilds'][str(guild_id)].get("prefix") is not None:
-        return st['guilds'][str(guild_id)]['prefix']
+    if await is_in_guilds_file(guild_id):
+        if st['guilds'][str(guild_id)].get("prefix") is not None:
+            return st['guilds'][str(guild_id)]['prefix']
+    return "!"
+
+
+async def is_in_guilds_file(guild_id):
+    settings = await get_server_settings()
+    if settings['guilds'].get(str(guild_id)) is None:
+        return False
     else:
-        return "!"
+        return True

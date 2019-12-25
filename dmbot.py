@@ -90,13 +90,13 @@ async def on_guild_remove(guild):
 
 @client.event
 async def on_guild_join(guild):
-	guild_id = str(guild.id)
-	settings = await jm.get_server_settings()
-	settings["guilds"][guild_id] = {}
-	await jm.write_server_settings(settings)
-	print(f"Oracle was added to a new guild: {guild.name}. "
-		  f"I created a new entry in the server file for them :D")
-	await asyncio.sleep(0.1)
+    guild_id = str(guild.id)
+    settings = await jm.get_server_settings()
+    settings["guilds"][guild_id] = {}
+    await jm.write_server_settings(settings)
+    print(f"Oracle was added to a new guild: {guild.name}. "
+          f"I created a new entry in the server file for them :D")
+    await asyncio.sleep(0.1)
 
 
 # Register my loop tasks and run the bot

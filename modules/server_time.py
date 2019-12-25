@@ -9,6 +9,7 @@ from datetime import datetime
 import pytz
 import modules.json_management as jm
 
+
 # Creates a category and channel for the server time in EST
 async def set_server_time(client):
     await client.wait_until_ready()
