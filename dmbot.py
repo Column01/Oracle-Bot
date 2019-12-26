@@ -6,8 +6,8 @@
 import discord
 import asyncio
 import modules.json_management as jm
-import modules.loyal_users as lu
-import modules.server_time as st
+import modules.loyal_users as loyalty
+import modules.server_time as servertime
 import commands.settings_command as scmd
 import commands.help_command as helpcmd
 import commands.dm_command as dmcmd
@@ -51,28 +51,36 @@ async def on_member_join(member):
 @client.event
 # When a member sends a message
 async def on_message(message):
+    author = message.author
     prefix = await jm.get_prefix(str(message.guild.id))
-    # If the message is from the bot or contains and embed, ignore it.
-    if message.author == client.user or len(message.embeds) > 0:
+    # If the message is from a bot or contains an embed, ignore it.
+    if author == client.user or len(message.embeds) > 0 or author.bot:
         return
-    # If the message author is an administrator
-    if message.author.guild_permissions.administrator:
-        # split the message contents so we have a command array with arguments
-        command = message.content.split()
-        # handle the commands
+    # split the message contents so we have a command array with arguments
+    command = message.content.split()
+    # Check if the message starts with the guild's prefix, if not, ignore it
+    if command[0][0] == prefix:
+        # DM command (ADMIN PERMS REQUIRED)
         if command[0] == f"{prefix}dm":
-            await dmcmd.handle_dm_command(message)
+            # If they are not an admin, tell them to bugger off.
+            if author_is_admin(author):
+                await dmcmd.handle_dm_command(message)
+            else:
+                await message.channel.send(f"I'm sorry, {author.name}, but you must be an admin to use the command.")
+        # Settings command (ADMIN PERMS REQUIRED)
         elif command[0] == f"{prefix}settings":
-            await scmd.handle_settings_command(message)
-        elif command[0] == f"{prefix}loyaltybot":
-            if command[1] == "help":
-                await helpcmd.handle_help_command(message)
+            # If they are not an admin, tell them to bugger off.
+            if author_is_admin(author):
+                await scmd.handle_settings_command(message)
+            else:
+                await message.channel.send(f"I'm sorry, {author.name}, but you must be an admin to use the command.")
+        # Help command
+        elif command[0] == f"{prefix}help":
+            await helpcmd.handle_help_command(message)
         else:
             unknown_command = " ".join(command)
             if unknown_command[:1] == prefix:
                 await message.channel.send(f"Unknown command: `{unknown_command}`. Did you type it correctly?")
-    else:
-        await message.channel.send("You must be an admin to use commands for Loyalty Bot!")
 
 
 @client.event
@@ -92,14 +100,19 @@ async def on_guild_remove(guild):
 async def on_guild_join(guild):
     guild_id = str(guild.id)
     settings = await jm.get_server_settings()
-    settings["guilds"][guild_id] = {}
-    await jm.write_server_settings(settings)
-    print(f"Oracle was added to a new guild: {guild.name}. "
-          f"I created a new entry in the server file for them :D")
-    await asyncio.sleep(0.1)
+    if settings["guilds"].get(guild_id) is None:
+        settings["guilds"][guild_id] = {}
+        await jm.write_server_settings(settings)
+        print(f"Oracle was added to a new guild: {guild.name}. "
+              f"I created a new entry in the server file for them :D")
+        await asyncio.sleep(0.1)
+
+
+def author_is_admin(author):
+    return author.guild_permissions.administrator
 
 
 # Register my loop tasks and run the bot
-client.loop.create_task(lu.check_loyal_users(client))
-client.loop.create_task(st.set_server_time(client))
+client.loop.create_task(loyalty.check_loyal_users(client))
+client.loop.create_task(servertime.set_server_time(client))
 client.run(token)
