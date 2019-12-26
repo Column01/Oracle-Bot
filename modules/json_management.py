@@ -55,7 +55,7 @@ async def get_prefix(guild_id):
     if await is_in_guilds_file(guild_id):
         if st['guilds'][str(guild_id)].get("prefix") is not None:
             return st['guilds'][str(guild_id)]['prefix']
-    return "!"
+    return "o!"
 
 
 async def is_in_guilds_file(guild_id):
