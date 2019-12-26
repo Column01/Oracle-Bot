@@ -81,8 +81,7 @@ async def on_message(message):
             await helpcmd.handle_help_command(message)
         else:
             unknown_command = " ".join(command)
-            if unknown_command[:1] == prefix:
-                await message.channel.send(f"Unknown command: `{unknown_command}`. Did you type it correctly?")
+            await message.channel.send(f"Unknown command: `{unknown_command}`. Did you type it correctly?")
 
 
 @client.event
