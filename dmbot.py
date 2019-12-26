@@ -44,7 +44,8 @@ async def on_member_join(member):
     for guild in client.guilds:
         # If the guild is the member's guild, send a welcome message to the system channel
         if guild == member.guild:
-            await guild.system_channel.send(f"Welcome {member.name} to {guild.name}!")
+            if guild.system_channel is not None:
+                await guild.system_channel.send(f"Welcome {member.name} to {guild.name}!")
         await asyncio.sleep(0.1)
 
 
