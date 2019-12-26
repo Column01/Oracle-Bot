@@ -20,10 +20,6 @@ async def set_server_time(client):
         formatted_time = datetime.strftime(t, "%m/%d/%y %H:%M EST")
         # For all guilds that the bot is connected to
         for guild in client.guilds:
-            # Set some overwrites to prevent joining of the Voice channel (all roles are blacklisted)
-            overwrites = {}
-            for role in guild.roles:
-                overwrites[role] = discord.PermissionOverwrite(connect=False)
             # Try and get the server time channel for the guild (set by the user)
             server_time_id = await jm.get_guild_time_channel(guild.id)
             server_time_channel = discord.utils.get(guild.voice_channels, id=server_time_id)
@@ -31,8 +27,9 @@ async def set_server_time(client):
             if server_time_channel is None or await _is_current_time(server_time_channel.name):
                 continue
             else:
-                # edit the name to the new time and set the overwrites again
-                await server_time_channel.edit(name=formatted_time, overwrites=overwrites)
+                # Edit the name to the new time and set the permissions to deny connecting users.
+                await server_time_channel.edit(name=formatted_time)
+                await server_time_channel.set_permissions(guild.default_role, connect=False)
         # Runs every second
         await asyncio.sleep(1)
 

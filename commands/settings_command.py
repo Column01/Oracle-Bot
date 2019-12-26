@@ -104,7 +104,7 @@ async def loyalty_roles_add(message, settings, guild_id, command, guild):
 async def sort_loyalty_roles(settings, guild_id):
     # Sorts the loyalty roles in order from highest day's required to lowest
     sorted_dict = {}
-    if settings["guilds"][guild_id].get(loyalty_roles) is not None:
+    if settings["guilds"][guild_id].get("loyalty_roles") is not None:
         loyal_roles = settings["guilds"][guild_id]["loyalty_roles"]
         for key, value in sorted(loyal_roles.items(), key=lambda item: int(item[1]), reverse=True):
             sorted_dict[key] = value

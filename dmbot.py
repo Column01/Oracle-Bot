@@ -3,6 +3,7 @@
 # Description: A bot that manages DM's and their players for discord servers
 # Author: Colin Andress
 
+import re
 import discord
 import asyncio
 import modules.json_management as jm
@@ -60,7 +61,7 @@ async def on_message(message):
     # split the message contents so we have a command array with arguments
     command = message.content.split()
     # Check if the message starts with the guild's prefix, if not, ignore it
-    if command[0][0] == prefix:
+    if re.match(f"{prefix}", command[0]):
         # DM command (ADMIN PERMS REQUIRED)
         if command[0] == f"{prefix}dm":
             # If they are not an admin, tell them to bugger off.
@@ -99,14 +100,21 @@ async def on_guild_remove(guild):
 
 @client.event
 async def on_guild_join(guild):
+    await create_guild_section(guild)
+    print(f"Oracle was added to a new guild: {guild.name}. "
+          f"I created a new entry in the server file for them :D")
+    await asyncio.sleep(0.1)
+
+
+async def create_guild_section(guild):
     guild_id = str(guild.id)
     settings = await jm.get_server_settings()
     if settings["guilds"].get(guild_id) is None:
         settings["guilds"][guild_id] = {}
+        settings["guilds"][guild_id]["loyalty_roles"] = {}
+        settings["guilds"][guild_id]["server_time_channel"] = 0
+        settings["guilds"][guild_id]["dms"] = {}
         await jm.write_server_settings(settings)
-        print(f"Oracle was added to a new guild: {guild.name}. "
-              f"I created a new entry in the server file for them :D")
-        await asyncio.sleep(0.1)
 
 
 def author_is_admin(author):

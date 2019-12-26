@@ -44,7 +44,11 @@ async def get_guild_time_channel(guild_id):
     st = await get_server_settings()
     if await is_in_guilds_file(guild_id):
         if st['guilds'][str(guild_id)].get("server_time_channel") is not None:
-            return int(st['guilds'][str(guild_id)]['server_time_channel'])
+            channel_id = int(st['guilds'][str(guild_id)]['server_time_channel'])
+            if channel_id == 0:
+                return None
+            else:
+                return int(st['guilds'][str(guild_id)]['server_time_channel'])
     return None
 
 
