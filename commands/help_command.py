@@ -36,13 +36,13 @@ async def handle_help_command(message):
     elif len(help_command) == 2 and help_command[1].lower() == "loyalty":
         embed = discord.Embed(title="Loyalty Help", description=description,
                               color=0xff0000)
-        embed.add_field(name=f"__**{prefix}settings loyaltyroles add <Role Name> <Days Required>**__",
-                        value="\nAdds the specified role (CaSe SeNsItIve) to the server config as a loyalty role."
-                              "\n*Setup:* Create a role (no spaces in the name allowed. Will fix later), "
-                              "run the above command with a days required value (whole numbers)\n",
+        embed.add_field(name=f"__**{prefix}settings loyaltyroles add @role <Days Required>**__",
+                        value="\nAdds the tagged role to the server config as a loyalty role."
+                              "\n*Setup:* Create a role and enable role tagging for it, "
+                              " and then run the above command with a days required value (whole numbers)\n",
                         inline=False)
-        embed.add_field(name=f"__**{prefix}settings loyaltyroles remove <Role Name>**__",
-                        value="\nRemoves the specified role (CaSe SeNsItIve) "
+        embed.add_field(name=f"__**{prefix}settings loyaltyroles remove @role**__",
+                        value="\nRemoves the specified role "
                               "from the server config as a loyalty role.",
                         inline=False)
         embed.set_footer(text=footer)

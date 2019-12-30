@@ -43,8 +43,10 @@ async def list_settings(message, settings, guild):
     guild_id = str(guild.id)
     roles_info = []
     index = 0
+    prefix = await jm.get_prefix(guild_id)
     await sort_loyalty_roles(settings, guild_id)
-    if len(settings["guilds"][guild_id]["loyalty_roles"]) == 0:
+    loyalty_roles = await jm.get_loyalty_roles(guild_id)
+    if loyalty_roles is None or len(loyalty_roles) == 0:
         roles_info.append("None")
     else:
         for role_id in settings["guilds"][guild_id]["loyalty_roles"]:
@@ -58,29 +60,30 @@ async def list_settings(message, settings, guild):
             await asyncio.sleep(0.1)
     roles_info = "".join(roles_info)
     server_time_id = await jm.get_guild_time_channel(str(guild.id))
-    await message.channel.send(f"__**Current server settings:**__\n\n"
-                               f"**Server time channel ID:** `{server_time_id}`\n\n"
-                               f"**Loyalty Roles:**\n"
-                               f"```\n"
-                               f"{roles_info}"
-                               f"```")
+    embed = discord.Embed(title="**Current Server Settings**", description="The current server settings")
+    embed.add_field(name="Current Bot Prefix", value=prefix, inline=False)
+    embed.add_field(name="Server Time Channel ID", value=server_time_id, inline=False)
+    embed.add_field(name="Loyalty Roles", value=roles_info, inline=False)
+    await message.channel.send(embed=embed)
 
 
 async def loyalty_roles_add(message, settings, guild_id, command, guild):
     prefix = await jm.get_prefix(guild_id)
-    usage = f"Usage: `{prefix}settings loyaltyroles add <Role Name> <number of days>`"
+    usage = f"Usage: `{prefix}settings loyaltyroles add @role <number of days>`"
     if len(command) == 5:
         # get the role and the days required
-        role = discord.utils.get(guild.roles, name=command[3])
+        role_id = message.role_mentions[0].id
+        role = discord.utils.get(guild.roles, id=role_id)
         if role is None:
-            await message.channel.send(f"Cannot find role with name: {command[3]}. "
-                                       f"Did you type it correctly?\nUsage: {usage}")
+            await message.channel.send(f"Cannot find the mentioned role. "
+                                       f"Did it get deleted?\nUsage: {usage}")
         days_req = command[4]
         if days_req < '1':
             await message.channel.send(f"You must provide a day requirement of 1 day or more.\n{usage}")
         # make the loyalty roles section if it doesn't exist already
         if settings["guilds"][guild_id].get("loyalty_roles") is None:
             settings["guilds"][guild_id]["loyalty_roles"] = {}
+            await jm.write_server_settings(settings)
             # add the role to the settings and write the settings to disk
         # if the role is not already in the server settings, add it
         if settings["guilds"][guild_id]["loyalty_roles"].get(str(role.id)) is None:
@@ -94,7 +97,8 @@ async def loyalty_roles_add(message, settings, guild_id, command, guild):
                                        f"`!settings list` to see existing loyalty roles")
     elif len(command) < 5:
         await asyncio.sleep(0.1)
-        await message.channel.send(f"You must provide the number of days required to get this role."
+        await message.channel.send(f"You must provide the number of days required to get this role "
+                                   f"as well as the name of the role."
                                    f"\nUsage: {usage}")
     else:
         await asyncio.sleep(0.1)
@@ -114,19 +118,23 @@ async def sort_loyalty_roles(settings, guild_id):
 
 async def loyalty_roles_remove(message, settings, guild_id, command, guild):
     prefix = await jm.get_prefix(guild_id)
-    usage = f"Usage: `{prefix}settings loyaltyroles remove <Role Name>`"
+    usage = f"Usage: `{prefix}settings loyaltyroles remove @Role`"
     if len(command) == 4:
         # Fetch the role from discord
-        role = discord.utils.get(guild.roles, name=command[3])
+
+        role_id = message.role_mentions[0].id
+        role = discord.utils.get(guild.roles, id=role_id)
         if role is None:
-            await message.channel.send(f"Cannot find role with name: {command[3]}. "
-                                       f"Did you type it correctly?\n{usage}")
+            await message.channel.send(f"Cannot find mentioned role. "
+                                       f"Did it get deleted?\nUsage: {usage}")
         # Remove the role from the loyalty roles
         settings["guilds"][guild_id]["loyalty_roles"].pop(str(role.id))
         # write changes
         await jm.write_server_settings(settings)
         await sort_loyalty_roles(settings, guild_id)
-        await message.channel.send(f"Removed role: `{command[3]}` from server settings.")
+        await message.channel.send(f"Removed role: `{role.name}` from server settings. Make sure to remove it from the "
+                                   f"users who have it if you want it to be fully removed as a Loyalty Role! (Delete "
+                                   f"it from the server settings is the fastest way)")
     elif len(command) < 4:
         await asyncio.sleep(0.1)
         await message.channel.send(f"You must provide the role you want removed from the server config"

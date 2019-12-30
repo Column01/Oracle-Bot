@@ -32,7 +32,7 @@ async def check_loyal_users(client):
                     days = abs(current-joined).days
                     # Get the server settings file and then get the loyalty roles for the server
                     if settings["guilds"][guild_id].get("loyalty_roles") is not None:
-                        loyalty_roles = settings["guilds"][guild_id]["loyalty_roles"]
+                        loyalty_roles = await jm.get_loyalty_roles(guild_id)
                         # Loop over all loyalty roles
                         for role_id in loyalty_roles:
                             role_days = int(loyalty_roles[role_id])
@@ -41,10 +41,13 @@ async def check_loyal_users(client):
                                 # Get the index of the next loyalty role in the storage
                                 # (the old role) and then get the role ID
                                 next_index = list(loyalty_roles.keys()).index(role_id) + 1
-                                old_role_id = list(loyalty_roles.keys())[next_index]
+                                if len(loyalty_roles.keys()) > 1:
+                                    old_role_id = list(loyalty_roles.keys())[next_index]
+                                    old_role = discord.utils.get(guild.roles, id=int(old_role_id))
+                                else:
+                                    old_role = None
                                 # get the new role and the old role from discord
                                 role = discord.utils.get(guild.roles, id=int(role_id))
-                                old_role = discord.utils.get(guild.roles, id=int(old_role_id))
                                 # if the new role exists on discord
                                 if role is not None:
                                     # and they don't already have it

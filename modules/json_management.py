@@ -62,6 +62,16 @@ async def get_prefix(guild_id):
     return "o!"
 
 
+async def get_loyalty_roles(guild_id):
+    st = await get_server_settings()
+    if await is_in_guilds_file(guild_id):
+        if st['guilds'][str(guild_id)].get("loyalty_roles") is not None:
+            return st['guilds'][str(guild_id)]['loyalty_roles']
+        return None
+    else:
+        return None
+
+
 async def is_in_guilds_file(guild_id):
     settings = await get_server_settings()
     if settings['guilds'].get(str(guild_id)) is None:

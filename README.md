@@ -4,7 +4,7 @@ A discord bot to manage Dungeon masters on your discord server
 
 ## Commands
 
-**NOTE:** Replace `o!` with the prefix you set in your server settings. If you forget your prefix, DM me on discord and I can reset it manually: `Column#2194`
+**NOTE:** Replace `o!` with the prefix you set in your server settings. If you forget your prefix, DM me on discord and I can reset it manually: `Column#2194` or kick and re-invite the bot (THIS WIPES SERVER SETTINGS!)
 
 ### Help Command
 
@@ -25,10 +25,10 @@ A discord bot to manage Dungeon masters on your discord server
 	- `o!settings servertime remove`
 
 - Add a loyalty role:
-	- `o!settings loyaltyroles add <role name> <days required>`
+	- `o!settings loyaltyroles add @role <days required>`
 
 - Remove a loyalty role:
-	- `o!settings loyaltyroles remove <role name>`
+	- `o!settings loyaltyroles remove @role`
 
 ### DM Management
 
