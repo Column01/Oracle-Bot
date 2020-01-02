@@ -6,6 +6,7 @@
 import re
 import discord
 import asyncio
+import os
 import modules.json_management as jm
 import modules.loyal_users as loyalty
 import modules.server_time as servertime
@@ -15,7 +16,8 @@ import commands.dm_command as dmcmd
 
 
 # Get discord bot token from disk and init other misc info
-token = open("token.txt", "r").read().strip("\n")
+token_path = os.getcwd() + "token.txt"
+token = open(token_path, "r").read().strip("\n")
 status = "who's loyal, and who's not!"
 
 client = discord.Client()
