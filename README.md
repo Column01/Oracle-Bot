@@ -1,6 +1,6 @@
-# DM Bot
+# Oracle Bot
 
-A discord bot to manage Dungeon masters on your discord server
+A discord bot to manage groups and other misc functions on your discord server
 
 ## Commands
 
