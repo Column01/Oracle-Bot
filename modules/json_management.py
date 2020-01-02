@@ -8,7 +8,7 @@ import asyncio
 import os
 
 
-guild_storage = os.getcwd() + "guild_storage.json"
+guild_storage = os.getcwd() + "/guild_storage.json"
 
 
 # Create the server settings file if it doesn't exist
