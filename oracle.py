@@ -1,6 +1,6 @@
 # Copyright © 2019, Colin Andress. All Rights reserved
-# Name: dmbot.py
-# Description: A bot that manages DM's and their players for discord servers
+# Name: oracle.py
+# Description: A bot that manages groups for discord servers
 # Author: Colin Andress
 
 import re
@@ -9,16 +9,16 @@ import asyncio
 import os
 import modules.json_management as jm
 import modules.loyal_users as loyalty
-import modules.server_time as servertime
-import commands.settings_command as scmd
-import commands.help_command as helpcmd
-import commands.dm_command as dmcmd
+import modules.server_time as server_time
+import commands.settings_command as settings_cmd
+import commands.help_command as help_cmd
+import commands.dm_command as dm_cmd
 
 
 # Get discord bot token from disk and init other misc info
 token_path = os.getcwd() + "/token.txt"
 token = open(token_path, "r").read().strip("\n")
-status = "who's loyal, and who's not!"
+status = "over you. Oracle knows all"
 
 client = discord.Client()
 
@@ -68,19 +68,19 @@ async def on_message(message):
         if command[0] == f"{prefix}dm":
             # If they are not an admin, tell them to bugger off.
             if author_is_admin(author):
-                await dmcmd.handle_dm_command(message)
+                await dm_cmd.handle_dm_command(message)
             else:
                 await message.channel.send(f"I'm sorry, {author.name}, but you must be an admin to use the command.")
         # Settings command (ADMIN PERMS REQUIRED)
         elif command[0] == f"{prefix}settings":
             # If they are not an admin, tell them to bugger off.
             if author_is_admin(author):
-                await scmd.handle_settings_command(message)
+                await settings_cmd.handle_settings_command(message)
             else:
                 await message.channel.send(f"I'm sorry, {author.name}, but you must be an admin to use the command.")
         # Help command
         elif command[0] == f"{prefix}help":
-            await helpcmd.handle_help_command(message)
+            await help_cmd.handle_help_command(message)
         else:
             unknown_command = " ".join(command)
             await message.channel.send(f"Unknown command: `{unknown_command}`. Did you type it correctly?")
@@ -124,5 +124,5 @@ def author_is_admin(author):
 
 # Register my loop tasks and run the bot
 client.loop.create_task(loyalty.check_loyal_users(client))
-client.loop.create_task(servertime.set_server_time(client))
+client.loop.create_task(server_time.set_server_time(client))
 client.run(token)
