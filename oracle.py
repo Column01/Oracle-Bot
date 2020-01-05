@@ -7,6 +7,7 @@ import re
 import discord
 import asyncio
 import os
+import logging
 import modules.json_management as jm
 import modules.loyal_users as loyalty
 import modules.server_time as server_time
@@ -15,11 +16,19 @@ import commands.help_command as help_cmd
 import commands.dm_command as dm_cmd
 
 
-# Get discord bot token from disk and init other misc info
+# Get discord bot token from disk and make a status
 token_path = os.getcwd() + "/token.txt"
 token = open(token_path, "r").read().strip("\n")
 status = "over you. Oracle knows all"
 
+# Initialize a logger (trying to track down a seemingly random SSL error.)
+logger = logging.getLogger("discord")
+logger.setLevel(logging.WARNING)
+handler = logging.FileHandler(filename="Oracle Log.log", encoding="utf-8", mode="w")
+handler.setFormatter(logging.Formatter("[%(levelname)s at %(asctime)] %(name)s: %(message)s"))
+logger.addHandler(handler)
+
+# Init Discord client
 client = discord.Client()
 
 
