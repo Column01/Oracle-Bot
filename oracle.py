@@ -25,7 +25,7 @@ status = "over you. Oracle knows all"
 logger = logging.getLogger("discord")
 logger.setLevel(logging.WARNING)
 handler = logging.FileHandler(filename="Oracle Log.log", encoding="utf-8", mode="w")
-handler.setFormatter(logging.Formatter("%(levelname)s at %(asctime): %(name)s: %(message)s"))
+handler.setFormatter(logging.Formatter("%(levelname)s at %(asctime) from %(name)s %(message)s"))
 logger.addHandler(handler)
 
 # Init Discord client
