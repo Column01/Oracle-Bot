@@ -11,6 +11,14 @@ from datetime import datetime
 import pytz
 import modules.json_management as jm
 
+# Initializing a logger for connection errors.
+logger = logging.getLogger("discord")
+logger.setLevel(logging.INFO)
+handler = logging.FileHandler(filename="Oracle.log", encoding="utf-8", mode="w")
+formatter = logging.Formatter("(%(asctime)s) [%(levelname)s] %(name)s %(message)s", "%d/%m/%y %H:%M:%S")
+handler.setFormatter(formatter)
+logger.addHandler(handler)
+
 
 # Creates a category and channel for the server time in EST
 async def set_server_time(client):
@@ -38,11 +46,6 @@ async def set_server_time(client):
             await asyncio.sleep(1)
         except ClientConnectorError as e:
             print(f"Error when setting servertime. Read exception below: \n{e}")
-            logger = logging.getLogger("discord")
-            logger.setLevel(logging.DEBUG)
-            handler = logging.FileHandler(filename="Oracle Log.log", encoding="utf-8", mode="w")
-            handler.setFormatter(logging.Formatter("%(levelname)s at %(asctime)s from %(name)s %(message)s"))
-            logger.addHandler(handler)
             logger.info(f"There was an exception when setting the server time. Read more below: \n {e}")
 
 

@@ -23,9 +23,10 @@ status = "over you. Oracle knows all"
 
 # Initialize a logger (trying to track down a seemingly random SSL error.)
 logger = logging.getLogger("discord")
-logger.setLevel(logging.DEBUG)
-handler = logging.FileHandler(filename="Oracle Log.log", encoding="utf-8", mode="w")
-handler.setFormatter(logging.Formatter("%(levelname)s at %(asctime)s from %(name)s %(message)s"))
+logger.setLevel(logging.INFO)
+handler = logging.FileHandler(filename="Oracle.log", encoding="utf-8", mode="w")
+formatter = logging.Formatter("(%(asctime)s) [%(levelname)s] %(name)s %(message)s", "%d/%m/%y %H:%M:%S")
+handler.setFormatter(formatter)
 logger.addHandler(handler)
 
 # Init Discord client
