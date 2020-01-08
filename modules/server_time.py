@@ -37,12 +37,13 @@ async def set_server_time(client):
             # Runs every second
             await asyncio.sleep(1)
         except ClientConnectorError as e:
+            print(f"Error when setting servertime. Read exception below: \n{e}")
             logger = logging.getLogger("discord")
-            logger.setLevel(logging.WARNING)
+            logger.setLevel(logging.DEBUG)
             handler = logging.FileHandler(filename="Oracle Log.log", encoding="utf-8", mode="w")
             handler.setFormatter(logging.Formatter("%(levelname)s at %(asctime) from %(name)s %(message)s"))
             logger.addHandler(handler)
-            logger.warning(f"There was an exception when setting the server time. Read more below: \n {e}")
+            logger.info(f"There was an exception when setting the server time. Read more below: \n {e}")
 
 
 # checks the current time against the time passed to it and if they are the same, will return True
