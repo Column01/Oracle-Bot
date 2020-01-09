@@ -135,4 +135,7 @@ def author_is_admin(author):
 # Register my loop tasks and run the bot
 client.loop.create_task(loyalty.check_loyal_users(client))
 client.loop.create_task(server_time.set_server_time(client))
-client.run(token)
+try:
+    client.run(token)
+except KeyboardInterrupt as e:
+    exit(0)
