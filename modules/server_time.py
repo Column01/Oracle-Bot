@@ -46,7 +46,7 @@ async def set_server_time(client):
             await asyncio.sleep(1)
         except ClientConnectorError as e:
             print(f"Error when setting servertime. Read exception below: \n{e}")
-            logger.info(f"There was an exception when setting the server time. Read more below: \n {e}")
+            logger.info(f"There was an exception when setting the server time. Read more below: \nException: {e}")
 
 
 # checks the current time against the time passed to it and if they are the same, will return True
