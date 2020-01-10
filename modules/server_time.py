@@ -12,7 +12,7 @@ import pytz
 import modules.json_management as jm
 
 # Initializing a logger for connection errors.
-logger = logging.getLogger("discord")
+logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 handler = logging.FileHandler(filename="Oracle.log", encoding="utf-8", mode="w")
 formatter = logging.Formatter("(%(asctime)s) [%(levelname)s] %(name)s %(message)s", "%d/%m/%y %H:%M:%S")
@@ -24,6 +24,7 @@ logger.addHandler(handler)
 async def set_server_time(client):
     await client.wait_until_ready()
     await asyncio.sleep(1)
+    logger.info('Server Time module started. Server time channels should now be altered to the current time.')
     while True:
         try:
             # Get current EST time and format it
