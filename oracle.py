@@ -21,13 +21,16 @@ token_path = os.getcwd() + "/token.txt"
 token = open(token_path, "r").read().strip("\n")
 status = "over you. Oracle knows all"
 
-# Initialize a logger (trying to track down a seemingly random SSL error.)
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+# Initialize a custom logger and a discord logger for various info
 handler = logging.FileHandler(filename="Oracle.log", encoding="utf-8", mode="w")
 formatter = logging.Formatter("(%(asctime)s) [%(levelname)s] %(name)s %(message)s", "%d/%m/%y %H:%M:%S")
 handler.setFormatter(formatter)
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+discord_logger = logging.getLogger('discord')
+discord_logger.setLevel(logging.INFO)
 logger.addHandler(handler)
+discord_logger.addHandler(handler)
 
 # Init Discord client
 client = discord.Client()
@@ -105,7 +108,7 @@ async def on_guild_remove(guild):
     settings["guilds"].pop(guild_id)
     await jm.write_server_settings(settings)
     logger.info(f"The guild: {guild.name} removed the bot from the guild. We are sad to see them go, "
-          f"but we know we are better off without them!")
+                f"but we know we are better off without them!")
     await asyncio.sleep(0.1)
 
 
@@ -113,7 +116,7 @@ async def on_guild_remove(guild):
 async def on_guild_join(guild):
     await create_guild_section(guild)
     logger.info(f"Oracle was added to a new guild: {guild.name}. "
-          f"I created a new entry in the server file for them")
+                f"I created a new entry in the server file for them")
     await asyncio.sleep(0.1)
 
 
