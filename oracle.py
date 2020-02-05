@@ -25,7 +25,7 @@ status = "over you. Oracle knows all"
 handler = logging.FileHandler(filename="Oracle.log", encoding="utf-8", mode="w")
 formatter = logging.Formatter("(%(asctime)s) [%(levelname)s] %(name)s %(message)s", "%d/%m/%y %H:%M:%S")
 handler.setFormatter(formatter)
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('Oracle Bot')
 logger.setLevel(logging.INFO)
 discord_logger = logging.getLogger('discord')
 discord_logger.setLevel(logging.INFO)
@@ -73,7 +73,7 @@ async def on_message(message):
     # If the message is from a bot or contains an embed, ignore it.
     if author == client.user or len(message.embeds) > 0 or author.bot:
         return
-    # split the message contents so we have a command array with arguments
+    # Split the message contents so we have a command array with arguments
     command = message.content.split()
     # Check if the message starts with the guild's prefix, if not, ignore it
     if re.match(f"{prefix}", command[0]):
@@ -113,6 +113,7 @@ async def on_guild_remove(guild):
 
 
 @client.event
+# Handles when the bot is added to a guild
 async def on_guild_join(guild):
     await create_guild_section(guild)
     logger.info(f"Oracle was added to a new guild: {guild.name}. "
@@ -121,6 +122,7 @@ async def on_guild_join(guild):
 
 
 async def create_guild_section(guild):
+    # Build a guild entry in the guild storage file
     guild_id = str(guild.id)
     settings = await jm.get_server_settings()
     if settings["guilds"].get(guild_id) is None:
